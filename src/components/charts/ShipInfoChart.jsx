@@ -1,5 +1,11 @@
 // src/components/charts/ShipInfoChart.jsx
-import React, { useRef, useMemo, useCallback, useState } from "react";
+import React, {
+  useRef,
+  useMemo,
+  useCallback,
+  useState,
+  useEffect,
+} from "react";
 import { Bar } from "react-chartjs-2";
 import { getAllShips } from "../../services/api";
 import { useQuery } from "@tanstack/react-query";
@@ -17,6 +23,8 @@ import {
   useChartColors,
   animationOptions,
   exportChartToImage,
+  getResponsiveOptions,
+  createGradientBackground,
 } from "./chartConfig";
 import {
   Box,
@@ -29,8 +37,11 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  useTheme,
+  Fade,
 } from "@mui/material";
 
+// Register necessary Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -40,10 +51,12 @@ ChartJS.register(
   Legend
 );
 
-const ShipInfoChart = () => {
+const ShipInfoChart = ({ containerDimensions }) => {
+  const theme = useTheme();
   const chartRef = useRef(null);
   const { getStatusColor } = useChartColors();
   const [sortBy, setSortBy] = useState("status"); // "status", "count"
+  const [chartInstance, setChartInstance] = useState(null);
 
   const {
     data: ships,
@@ -63,6 +76,29 @@ const ShipInfoChart = () => {
       .toLowerCase()
       .replace(/\b\w/g, (c) => c.toUpperCase());
   };
+
+  // Create gradient backgrounds when chart is rendered
+  useEffect(() => {
+    if (chartInstance && chartInstance.ctx) {
+      // Get the chart's rendering context
+      const ctx = chartInstance.ctx;
+      const datasets = chartInstance.data.datasets;
+
+      if (
+        datasets.length > 0 &&
+        datasets[0].backgroundColor &&
+        Array.isArray(datasets[0].backgroundColor)
+      ) {
+        // Apply gradients
+        const newBackgrounds = createGradientBackground(
+          ctx,
+          datasets[0].backgroundColor
+        );
+        datasets[0].backgroundColor = newBackgrounds;
+        chartInstance.update();
+      }
+    }
+  }, [chartInstance]);
 
   // Process data for the chart
   const chartData = useMemo(() => {
@@ -136,21 +172,28 @@ const ShipInfoChart = () => {
         activeCount: statusCounts["ACTIVE"] || 0,
         quarantineCount: statusCounts["QUARANTINE"] || 0,
         reviewCount: statusCounts["UNDER_REVIEW"] || 0,
+        maintenanceCount: statusCounts["MAINTENANCE"] || 0,
       },
     };
   }, [ships, getStatusColor, sortBy]);
 
-  // Configure chart options
-  const options = useMemo(
-    () => ({
+  // Configure chart options with responsiveness
+  const options = useMemo(() => {
+    // Determine if we're in a narrow container
+    const isNarrow = containerDimensions && containerDimensions.width < 400;
+
+    // Base options
+    const baseOptions = {
       ...animationOptions,
       responsive: true,
       maintainAspectRatio: false,
+      indexAxis: isNarrow ? "y" : "y", // Always horizontal bar for this chart
       layout: {
         padding: {
           top: 20,
           bottom: 10,
           right: 30, // Extra padding for value labels on bars
+          left: isNarrow ? 100 : 20, // More padding for labels in narrow view
         },
       },
       scales: {
@@ -158,9 +201,13 @@ const ShipInfoChart = () => {
           beginAtZero: true,
           grid: {
             drawBorder: false,
+            display: false,
           },
           ticks: {
             precision: 0,
+            font: {
+              size: isNarrow ? 10 : 12,
+            },
           },
         },
         x: {
@@ -169,10 +216,12 @@ const ShipInfoChart = () => {
           },
           ticks: {
             precision: 0,
+            font: {
+              size: isNarrow ? 10 : 12,
+            },
           },
         },
       },
-      indexAxis: "y", // Horizontal bar chart
       plugins: {
         ...animationOptions.plugins,
         legend: {
@@ -190,9 +239,11 @@ const ShipInfoChart = () => {
           },
         },
       },
-    }),
-    [chartData]
-  );
+    };
+
+    // Apply responsive options based on container dimensions
+    return getResponsiveOptions(containerDimensions, baseOptions);
+  }, [containerDimensions, chartData]);
 
   // Render the data values on the bars
   const plugins = useMemo(
@@ -200,6 +251,11 @@ const ShipInfoChart = () => {
       {
         id: "valueLabels",
         afterDatasetsDraw(chart) {
+          // Save the chart instance for gradient creation
+          if (!chartInstance) {
+            setChartInstance(chart);
+          }
+
           const { ctx } = chart;
 
           chart.data.datasets.forEach((dataset, i) => {
@@ -223,7 +279,10 @@ const ShipInfoChart = () => {
                   : element;
 
                 ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-                ctx.font = "11px sans-serif";
+                ctx.font =
+                  containerDimensions && containerDimensions.width < 400
+                    ? "10px sans-serif"
+                    : "11px sans-serif";
                 ctx.textAlign = "left";
                 ctx.textBaseline = "middle";
 
@@ -239,7 +298,7 @@ const ShipInfoChart = () => {
         },
       },
     ],
-    [chartData]
+    [chartData, chartInstance, containerDimensions]
   );
 
   // Export chart as PNG image
@@ -289,8 +348,9 @@ const ShipInfoChart = () => {
         error={error}
         onRefetch={refetch}
         exportChart={handleExport}
+        containerDimensions={containerDimensions}
       >
-        <Box sx={{ flex: 1, minHeight: "220px" }}>
+        <Box sx={{ flex: 1, minHeight: "220px", position: "relative" }}>
           {chartData && (
             <Bar
               ref={chartRef}
@@ -305,81 +365,130 @@ const ShipInfoChart = () => {
 
       {/* Summary Cards */}
       {chartData && chartData._summary && (
-        <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={6} md={3}>
-            <Card variant="outlined" sx={{ backgroundColor: "success.light" }}>
-              <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
-                <Typography color="text.secondary" variant="caption">
-                  Active Ships
-                </Typography>
-                <Typography variant="h6">
-                  {chartData._summary.activeCount}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {Math.round(
-                    (chartData._summary.activeCount /
-                      chartData._summary.total) *
-                      100
-                  )}
-                  % of fleet
-                </Typography>
-              </CardContent>
-            </Card>
+        <Fade in={true} timeout={800}>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={6} md={3}>
+              <Card
+                variant="outlined"
+                sx={{
+                  backgroundColor: "success.light",
+                  transition: "transform 0.3s ease",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: 2,
+                  },
+                }}
+              >
+                <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
+                  <Typography color="text.secondary" variant="caption">
+                    Active Ships
+                  </Typography>
+                  <Typography variant="h6">
+                    {chartData._summary.activeCount}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {Math.round(
+                      (chartData._summary.activeCount /
+                        chartData._summary.total) *
+                        100
+                    )}
+                    % of fleet
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={6} md={3}>
+              <Card
+                variant="outlined"
+                sx={{
+                  backgroundColor: "warning.light",
+                  transition: "transform 0.3s ease",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: 2,
+                  },
+                }}
+              >
+                <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
+                  <Typography color="text.secondary" variant="caption">
+                    Under Review
+                  </Typography>
+                  <Typography variant="h6">
+                    {chartData._summary.reviewCount}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {Math.round(
+                      (chartData._summary.reviewCount /
+                        chartData._summary.total) *
+                        100
+                    )}
+                    % of fleet
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={6} md={3}>
+              <Card
+                variant="outlined"
+                sx={{
+                  backgroundColor: "error.light",
+                  transition: "transform 0.3s ease",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: 2,
+                  },
+                }}
+              >
+                <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
+                  <Typography color="text.secondary" variant="caption">
+                    In Quarantine
+                  </Typography>
+                  <Typography variant="h6">
+                    {chartData._summary.quarantineCount}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {Math.round(
+                      (chartData._summary.quarantineCount /
+                        chartData._summary.total) *
+                        100
+                    )}
+                    % of fleet
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={6} md={3}>
+              <Card
+                variant="outlined"
+                sx={{
+                  backgroundColor: "primary.light",
+                  transition: "transform 0.3s ease",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: 2,
+                  },
+                }}
+              >
+                <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
+                  <Typography color="text.secondary" variant="caption">
+                    Maintenance
+                  </Typography>
+                  <Typography variant="h6">
+                    {chartData._summary.maintenanceCount}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {Math.round(
+                      (chartData._summary.maintenanceCount /
+                        chartData._summary.total) *
+                        100
+                    )}
+                    % of fleet
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
           </Grid>
-          <Grid item xs={6} md={3}>
-            <Card variant="outlined" sx={{ backgroundColor: "warning.light" }}>
-              <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
-                <Typography color="text.secondary" variant="caption">
-                  Under Review
-                </Typography>
-                <Typography variant="h6">
-                  {chartData._summary.reviewCount}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {Math.round(
-                    (chartData._summary.reviewCount /
-                      chartData._summary.total) *
-                      100
-                  )}
-                  % of fleet
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={6} md={3}>
-            <Card variant="outlined" sx={{ backgroundColor: "error.light" }}>
-              <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
-                <Typography color="text.secondary" variant="caption">
-                  In Quarantine
-                </Typography>
-                <Typography variant="h6">
-                  {chartData._summary.quarantineCount}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {Math.round(
-                    (chartData._summary.quarantineCount /
-                      chartData._summary.total) *
-                      100
-                  )}
-                  % of fleet
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={6} md={3}>
-            <Card variant="outlined" sx={{ backgroundColor: "grey.100" }}>
-              <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
-                <Typography color="text.secondary" variant="caption">
-                  Total Ships
-                </Typography>
-                <Typography variant="h6">{chartData._summary.total}</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  In the monitoring system
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+        </Fade>
       )}
     </Box>
   );

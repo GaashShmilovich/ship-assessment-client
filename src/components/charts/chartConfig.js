@@ -1,7 +1,7 @@
 // src/components/charts/chartConfig.js
 import { useTheme } from "@mui/material"
 
-// Custom chart color palette
+// Custom chart color palette with enhanced colors
 export const chartColors = {
     primary: [
         "rgba(25, 118, 210, 0.7)",
@@ -49,17 +49,18 @@ export const statusColors = {
     UNKNOWN: { main: "neutral", index: 0 },
 }
 
-// Chart animation config
+// Improved chart animation config with better responsiveness
 export const animationOptions = {
     responsive: true,
+    maintainAspectRatio: false, // Critical for proper resizing
     animation: {
-        duration: 1000,
+        duration: 800,
         easing: "easeOutQuart",
     },
     transitions: {
         active: {
             animation: {
-                duration: 400,
+                duration: 300,
             },
         },
     },
@@ -72,6 +73,7 @@ export const animationOptions = {
                     size: 12,
                 },
             },
+            position: 'top',
         },
         tooltip: {
             backgroundColor: "rgba(0, 0, 0, 0.8)",
@@ -85,8 +87,107 @@ export const animationOptions = {
             padding: 10,
             cornerRadius: 4,
             displayColors: true,
+            usePointStyle: true,
+            callbacks: {
+                // Default callback to format percentages
+                labelPercentage: function (context, total) {
+                    const value = context.raw || 0
+                    const percentage = total ? Math.round((value / total) * 100) : 0
+                    return `${percentage}%`
+                }
+            }
         },
+        // Ensure datalabels plugin doesn't conflict with chart.js
+        datalabels: {
+            display: false // Disable by default, enable explicitly when needed
+        }
     },
+    // Better defaults for small containers
+    layout: {
+        padding: {
+            top: 10,
+            right: 16,
+            bottom: 10,
+            left: 8
+        }
+    },
+    // Better responsive behavior
+    resizeDelay: 100, // Debounce resize events
+}
+
+// Generate responsive options based on container dimensions
+export const getResponsiveOptions = (dimensions, baseOptions = {}) => {
+    const { width = 0, height = 0 } = dimensions || {}
+    const isSmall = width < 300 || height < 200
+    const isMedium = (width >= 300 && width < 500) || (height >= 200 && height < 300)
+
+    // Dynamically adjust options based on container size
+    const responsiveOptions = {
+        ...baseOptions,
+        plugins: {
+            ...baseOptions.plugins,
+            legend: {
+                ...baseOptions.plugins?.legend,
+                display: !isSmall, // Hide legend on small containers
+                position: isSmall ? 'bottom' : (isMedium ? 'bottom' : 'top'),
+                labels: {
+                    ...baseOptions.plugins?.legend?.labels,
+                    boxWidth: isSmall ? 8 : (isMedium ? 12 : 16),
+                    font: {
+                        ...baseOptions.plugins?.legend?.labels?.font,
+                        size: isSmall ? 10 : (isMedium ? 11 : 12)
+                    }
+                }
+            },
+            tooltip: {
+                ...baseOptions.plugins?.tooltip,
+                enabled: true, // Always enable tooltips
+                titleFont: {
+                    ...baseOptions.plugins?.tooltip?.titleFont,
+                    size: isSmall ? 12 : 14
+                },
+                bodyFont: {
+                    ...baseOptions.plugins?.tooltip?.bodyFont,
+                    size: isSmall ? 11 : 13
+                }
+            },
+            title: {
+                ...baseOptions.plugins?.title,
+                display: baseOptions.plugins?.title?.display && !isSmall,
+                font: {
+                    ...baseOptions.plugins?.title?.font,
+                    size: isSmall ? 14 : (isMedium ? 16 : 18)
+                }
+            }
+        },
+        scales: {
+            ...baseOptions.scales,
+            x: {
+                ...baseOptions.scales?.x,
+                ticks: {
+                    ...baseOptions.scales?.x?.ticks,
+                    display: !isSmall,
+                    font: {
+                        ...baseOptions.scales?.x?.ticks?.font,
+                        size: isSmall ? 9 : (isMedium ? 10 : 12)
+                    },
+                    maxRotation: isSmall ? 45 : (isMedium ? 45 : 0),
+                }
+            },
+            y: {
+                ...baseOptions.scales?.y,
+                ticks: {
+                    ...baseOptions.scales?.y?.ticks,
+                    font: {
+                        ...baseOptions.scales?.y?.ticks?.font,
+                        size: isSmall ? 9 : (isMedium ? 10 : 12)
+                    }
+                }
+            }
+        }
+    }
+
+    return responsiveOptions
 }
 
 // Hook to generate chart colors based on theme and status
@@ -106,23 +207,50 @@ export const useChartColors = () => {
 
     const getChartColorSet = (type = "primary", count = 5) => {
         const colorSet = chartColors[type] || chartColors.primary
-        return colorSet.slice(0, count)
+        // Create a new array to avoid mutating the original
+        return [...colorSet].slice(0, count)
     }
 
     return { getStatusColor, getChartColorSet }
 }
 
-// Generate a canvas to export chart as image
+// Generate a canvas to export chart as image with enhanced quality
 export const exportChartToImage = (chartRef, fileName = "chart.png") => {
     if (!chartRef || !chartRef.current) return
 
-    // Check if the chart has toBase64Image method (Chart.js 3.x+)
-    if (typeof chartRef.current.toBase64Image === 'function') {
-        const link = document.createElement("a")
-        link.download = fileName
-        link.href = chartRef.current.toBase64Image()
-        link.click()
-    } else {
-        console.warn('Chart export is not available')
+    try {
+        // Check if the chart has toBase64Image method (Chart.js 3.x+)
+        if (typeof chartRef.current.toBase64Image === 'function') {
+            const link = document.createElement("a")
+            link.download = fileName
+            // Use better quality settings
+            link.href = chartRef.current.toBase64Image('image/png', 1.0)
+            link.click()
+        } else {
+            console.warn('Chart export is not available - chart instance missing toBase64Image method')
+        }
+    } catch (error) {
+        console.error('Error exporting chart:', error)
     }
+}
+
+// Function to create gradient backgrounds for charts
+export const createGradientBackground = (ctx, colors) => {
+    if (!ctx) return colors
+
+    return colors.map(color => {
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400)
+        // Extract rgba values
+        const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([0-9.]+))?\)/)
+
+        if (!rgbaMatch) return color
+
+        const [, r, g, b, a = "1"] = rgbaMatch
+
+        // Create gradient with transparency
+        gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${a})`)
+        gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.1)`)
+
+        return gradient
+    })
 }
