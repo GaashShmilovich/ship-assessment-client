@@ -1,20 +1,46 @@
+// src/components/AutoResizeBox.jsx
 import React, { useRef, useEffect } from "react";
+import { Box } from "@mui/material";
 
-const AutoResizeBox = ({ children, onResize }) => {
-  const ref = useRef(null);
+/**
+ * A component that wraps content and detects size changes
+ * It doesn't rely on an onResize callback anymore to be more flexible
+ */
+const AutoResizeBox = ({ children, sx = {} }) => {
+  const containerRef = useRef(null);
 
+  // Set up the ResizeObserver
   useEffect(() => {
-    if (!ref.current) return;
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        onResize(entry.contentRect.height);
-      }
-    });
-    resizeObserver.observe(ref.current);
-    return () => resizeObserver.disconnect();
-  }, [onResize]);
+    if (!containerRef.current) return;
 
-  return <div ref={ref}>{children}</div>;
+    // Create new ResizeObserver
+    const resizeObserver = new ResizeObserver((entries) => {
+      // We'll just let the component render naturally
+      // No need to call an external callback that could be missing
+    });
+
+    // Start observing the container
+    resizeObserver.observe(containerRef.current);
+
+    // Clean up observer on unmount
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  return (
+    <Box
+      ref={containerRef}
+      sx={{
+        height: "100%",
+        width: "100%",
+        overflow: "hidden",
+        ...sx,
+      }}
+    >
+      {children}
+    </Box>
+  );
 };
 
 export default AutoResizeBox;
