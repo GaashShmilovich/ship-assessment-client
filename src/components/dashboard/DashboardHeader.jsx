@@ -16,30 +16,36 @@ import { getAllShips, getAllInfractions } from "../../services/api";
  * Precisely aligned with map container below
  */
 const DashboardHeader = () => {
-  // Fetch data for metrics
-  const { data: ships, isLoading: shipsLoading } = useQuery({
+  // Fetch data for metrics - Added default empty arrays
+  const { data: ships = [], isLoading: shipsLoading } = useQuery({
     queryKey: ["ships"],
-    queryFn: () => getAllShips().then((res) => res.data),
+    queryFn: () => getAllShips().then((res) => res.data || []),
   });
 
-  const { data: infractions, isLoading: infractionsLoading } = useQuery({
+  const { data: infractions = [], isLoading: infractionsLoading } = useQuery({
     queryKey: ["infractions"],
-    queryFn: () => getAllInfractions().then((res) => res.data),
+    queryFn: () => getAllInfractions().then((res) => res.data || []),
   });
 
-  // Calculate statistics
+  // Calculate statistics - Added safety checks for arrays
   const stats = React.useMemo(() => {
-    if (!ships || shipsLoading) return null;
+    if (shipsLoading) return null;
 
-    const totalShips = ships.length;
-    const activeShips = ships.filter((s) => s.shipStatus === "ACTIVE").length;
-    const underReview = ships.filter(
+    // Ensure ships is an array
+    const shipsArray = Array.isArray(ships) ? ships : [];
+    const infractionsArray = Array.isArray(infractions) ? infractions : [];
+
+    const totalShips = shipsArray.length;
+    const activeShips = shipsArray.filter(
+      (s) => s.shipStatus === "ACTIVE"
+    ).length;
+    const underReview = shipsArray.filter(
       (s) => s.shipStatus === "UNDER_REVIEW"
     ).length;
-    const inQuarantine = ships.filter(
+    const inQuarantine = shipsArray.filter(
       (s) => s.shipStatus === "QUARANTINE"
     ).length;
-    const totalInfractions = infractions?.length || 0;
+    const totalInfractions = infractionsArray.length;
 
     return {
       totalShips,
@@ -82,8 +88,8 @@ const DashboardHeader = () => {
   }
 
   return (
-    // No container or max-width here to match parent container width exactly
-    <Box sx={{ width: 1200, mb: 3 }}>
+    // Changed fixed width to responsive width
+    <Box sx={{ width: "100%", maxWidth: 1200, mb: 3 }}>
       <Typography
         variant="h4"
         sx={{
@@ -173,9 +179,9 @@ const DashboardHeader = () => {
                   mt: 0.5,
                 }}
               >
-                {((stats?.underReview / stats?.totalShips) * 100 || 0).toFixed(
-                  1
-                )}
+                {stats?.totalShips
+                  ? ((stats.underReview / stats.totalShips) * 100).toFixed(1)
+                  : "0.0"}
                 % of fleet
               </Typography>
             </CardContent>
@@ -217,9 +223,9 @@ const DashboardHeader = () => {
                   mt: 0.5,
                 }}
               >
-                {((stats?.inQuarantine / stats?.totalShips) * 100 || 0).toFixed(
-                  1
-                )}
+                {stats?.totalShips
+                  ? ((stats.inQuarantine / stats.totalShips) * 100).toFixed(1)
+                  : "0.0"}
                 % of fleet
               </Typography>
             </CardContent>
@@ -261,7 +267,9 @@ const DashboardHeader = () => {
                   mt: 0.5,
                 }}
               >
-                {(stats?.totalInfractions / stats?.totalShips || 0).toFixed(1)}{" "}
+                {stats?.totalShips && stats?.totalShips > 0
+                  ? (stats.totalInfractions / stats.totalShips).toFixed(1)
+                  : "0.0"}{" "}
                 per ship avg.
               </Typography>
             </CardContent>
