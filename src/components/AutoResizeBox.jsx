@@ -1,4 +1,4 @@
-// src/components/AutoResizeBox.jsx
+// src/components/AutoResizeBox.jsx - Fixed version
 import React, { useRef, useEffect, useState } from "react";
 import { Box } from "@mui/material";
 
@@ -9,6 +9,7 @@ import { Box } from "@mui/material";
 const AutoResizeBox = ({ children, sx = {}, onResize }) => {
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Set up the ResizeObserver
   useEffect(() => {
@@ -29,6 +30,11 @@ const AutoResizeBox = ({ children, sx = {}, onResize }) => {
           onResize({ width, height });
         }
       }
+
+      // Mark as initialized after first measurement
+      if (!isInitialized) {
+        setIsInitialized(true);
+      }
     });
 
     resizeObserver.observe(containerRef.current);
@@ -36,6 +42,29 @@ const AutoResizeBox = ({ children, sx = {}, onResize }) => {
     return () => {
       resizeObserver.disconnect();
     };
+  }, [onResize, dimensions, isInitialized]);
+
+  // Force a measurement update after a short delay to ensure children have rendered
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (containerRef.current) {
+        const width = containerRef.current.clientWidth;
+        const height = containerRef.current.clientHeight;
+
+        if (
+          width > 0 &&
+          height > 0 &&
+          (width !== dimensions.width || height !== dimensions.height)
+        ) {
+          setDimensions({ width, height });
+          if (onResize) {
+            onResize({ width, height });
+          }
+        }
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [onResize]);
 
   const childrenWithProps = React.Children.map(children, (child) => {
@@ -74,11 +103,13 @@ const AutoResizeBox = ({ children, sx = {}, onResize }) => {
       sx={{
         height: "100%",
         width: "100%",
-        overflow: "hidden",
+        minHeight: 300, // Ensure component has minimum height
         display: "flex",
         flexDirection: "column",
+        position: "relative",
         ...sx,
       }}
+      data-dimensions={`${dimensions.width}x${dimensions.height}`}
     >
       {childrenWithProps}
     </Box>

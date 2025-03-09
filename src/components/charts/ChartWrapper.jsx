@@ -87,6 +87,8 @@ const ChartWrapper = ({
         border: error ? `1px solid ${theme.palette.error.light}` : "none",
         borderRadius: 1,
         height: "100%",
+        // Set a minimum height to ensure charts don't collapse
+        minHeight: "300px",
       }}
     >
       <Box
@@ -94,7 +96,7 @@ const ChartWrapper = ({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          mb: 2,
+          mb: 1,
         }}
       >
         <Box>
@@ -115,8 +117,6 @@ const ChartWrapper = ({
           {exportChart && (
             <Tooltip title="Export chart as image">
               <span>
-                {" "}
-                {/* Added span wrapper */}
                 <IconButton
                   size="small"
                   onClick={exportChart}
@@ -131,8 +131,6 @@ const ChartWrapper = ({
           {onRefetch && (
             <Tooltip title="Refresh data">
               <span>
-                {" "}
-                {/* Added span wrapper */}
                 <IconButton
                   size="small"
                   onClick={handleRetryWithFeedback}
@@ -150,8 +148,6 @@ const ChartWrapper = ({
           {showFullscreenButton && onFullscreen && (
             <Tooltip title="View fullscreen">
               <span>
-                {" "}
-                {/* Added span wrapper */}
                 <IconButton
                   size="small"
                   onClick={onFullscreen}
@@ -166,6 +162,7 @@ const ChartWrapper = ({
         </Box>
       </Box>
 
+      {/* Increased minimum height to ensure visibility */}
       <Box
         sx={{
           flexGrow: 1,
@@ -173,7 +170,10 @@ const ChartWrapper = ({
           position: "relative",
           border: error ? `1px solid ${theme.palette.error.light}` : "none",
           borderRadius: 1,
-          overflow: "hidden",
+          // Use hidden to prevent overflow but allow scrolling when needed
+          overflow: "auto",
+          // Add some padding to ensure chart labels don't get cut off
+          p: 1,
         }}
       >
         {isLoading ? (
@@ -185,6 +185,7 @@ const ChartWrapper = ({
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
+                minHeight: height - 30, // Account for padding
               }}
             >
               <CircularProgress size={36} sx={{ mb: 2 }} />
@@ -203,6 +204,7 @@ const ChartWrapper = ({
                 alignItems: "center",
                 justifyContent: "center",
                 p: 2,
+                minHeight: height - 30, // Account for padding
               }}
             >
               <ErrorOutlineIcon color="error" sx={{ fontSize: 40, mb: 2 }} />
@@ -230,7 +232,7 @@ const ChartWrapper = ({
           </Fade>
         ) : (
           <AutoResizeBox onResize={handleResize}>
-            {/* Clone children and pass dimensions - THIS IS THE PROBLEM PART */}
+            {/* Clone children and pass dimensions */}
             {React.Children.map(children, (child) => {
               if (React.isValidElement(child)) {
                 // Only pass props to custom components (uppercase first letter)
@@ -250,6 +252,12 @@ const ChartWrapper = ({
                   return React.cloneElement(child, {
                     containerDimensions: dimensions,
                     parentHeight: height,
+                    style: {
+                      ...child.props.style,
+                      width: "100%",
+                      height: "100%",
+                      minHeight: 250, // Ensure minimum height for charts
+                    },
                   });
                 }
               }

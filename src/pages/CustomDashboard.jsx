@@ -1,4 +1,4 @@
-// src/pages/CustomDashboard.jsx
+// Modified CustomDashboard.jsx with properly aligned controls
 import React, { useState, useEffect, useCallback } from "react";
 import GridLayout from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -6,13 +6,7 @@ import "react-resizable/css/styles.css";
 import {
   Box,
   Typography,
-  Container,
   Paper,
-  IconButton,
-  Tooltip,
-  Chip,
-  useMediaQuery,
-  useTheme,
   Button,
   Fade,
   Snackbar,
@@ -26,17 +20,14 @@ import InfractionsChart from "../components/charts/InfractionsChart";
 import CargoCapacityChart from "../components/charts/CargoCapacityChart";
 import AutoResizeBox from "../components/AutoResizeBox";
 import DashboardHeader from "../components/dashboard/DashboardHeader";
-import RefreshIcon from "@mui/icons-material/Refresh";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import DashboardControls from "../components/dashboard/DashboardControls"; // Import the extracted component
 import DirectionsBoatIcon from "@mui/icons-material/DirectionsBoat";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import WarningIcon from "@mui/icons-material/Warning";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
-import SaveIcon from "@mui/icons-material/Save";
-import RestoreIcon from "@mui/icons-material/Restore";
-import FullscreenIcon from "@mui/icons-material/Fullscreen";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTheme, useMediaQuery } from "@mui/material";
 
 // Widget configuration
 const widgetConfig = {
@@ -67,38 +58,39 @@ const widgetConfig = {
   },
 };
 
+// Default layout
 const getDefaultLayout = (width) => {
   const cols = width < 600 ? 1 : width < 960 ? 2 : 12;
 
-  // For mobile: Stack all widgets with fixed heights
+  // For mobile: Stack all widgets
   if (cols === 1) {
     return [
-      { i: "shipMap", x: 0, y: 0, w: 1, h: 16, static: false }, // Map
-      { i: "shipInfo", x: 0, y: 16, w: 1, h: 14, static: false }, // Ship status
-      { i: "ssa", x: 0, y: 30, w: 1, h: 14, static: false }, // SSA pie chart
-      { i: "infractions", x: 0, y: 44, w: 1, h: 14, static: false }, // Infractions
-      { i: "cargo", x: 0, y: 58, w: 1, h: 14, static: false }, // Cargo
+      { i: "shipMap", x: 0, y: 0, w: 1, h: 16, static: false },
+      { i: "shipInfo", x: 0, y: 16, w: 1, h: 18, static: false },
+      { i: "ssa", x: 0, y: 34, w: 1, h: 18, static: false },
+      { i: "infractions", x: 0, y: 52, w: 1, h: 18, static: false },
+      { i: "cargo", x: 0, y: 70, w: 1, h: 18, static: false },
     ];
   }
 
   // For tablet: Two column layout
   if (cols === 2) {
     return [
-      { i: "shipMap", x: 0, y: 0, w: 2, h: 16, static: false }, // Full width map
-      { i: "shipInfo", x: 0, y: 16, w: 1, h: 14, static: false }, // Left column
-      { i: "ssa", x: 1, y: 16, w: 1, h: 14, static: false }, // Right column
-      { i: "infractions", x: 0, y: 30, w: 1, h: 14, static: false }, // Left column
-      { i: "cargo", x: 1, y: 30, w: 1, h: 14, static: false }, // Right column
+      { i: "shipMap", x: 0, y: 0, w: 2, h: 16, static: false },
+      { i: "shipInfo", x: 0, y: 16, w: 1, h: 18, static: false },
+      { i: "ssa", x: 1, y: 16, w: 1, h: 18, static: false },
+      { i: "infractions", x: 0, y: 34, w: 1, h: 18, static: false },
+      { i: "cargo", x: 1, y: 34, w: 1, h: 18, static: false },
     ];
   }
 
   // Default (desktop) layout
   return [
-    { i: "shipMap", x: 0, y: 0, w: 12, h: 16, static: false }, // Full width map
-    { i: "shipInfo", x: 0, y: 16, w: 6, h: 14, static: false }, // Left half
-    { i: "ssa", x: 6, y: 16, w: 6, h: 14, static: false }, // Right half
-    { i: "infractions", x: 0, y: 30, w: 6, h: 14, static: false }, // Left half
-    { i: "cargo", x: 6, y: 30, w: 6, h: 14, static: false }, // Right half
+    { i: "shipMap", x: 0, y: 0, w: 12, h: 18, static: false },
+    { i: "shipInfo", x: 0, y: 18, w: 6, h: 16, static: false },
+    { i: "ssa", x: 6, y: 18, w: 6, h: 16, static: false },
+    { i: "infractions", x: 0, y: 34, w: 6, h: 16, static: false },
+    { i: "cargo", x: 6, y: 34, w: 6, h: 16, static: false },
   ];
 };
 
@@ -130,11 +122,11 @@ const SimpleWidget = ({ title, icon: IconComponent, children }) => {
       sx={{
         height: "100%",
         borderRadius: 2,
-        overflow: "hidden", // Changed back to hidden to prevent overflow
         display: "flex",
         flexDirection: "column",
         transition: "all 0.3s ease",
         "&:hover": { boxShadow: 4 },
+        overflow: "hidden",
       }}
     >
       {/* Header */}
@@ -161,16 +153,16 @@ const SimpleWidget = ({ title, icon: IconComponent, children }) => {
             {title}
           </Typography>
         </Box>
-        {/* Remove resize button since resizing is disabled */}
       </Box>
 
       {/* Content */}
       <Box
         sx={{
           flexGrow: 1,
-          overflow: "auto", // Allow scrolling if content is too large
+          overflow: "auto",
           p: 2,
           position: "relative",
+          minHeight: "300px",
         }}
       >
         {isLoading ? (
@@ -217,7 +209,7 @@ const CustomDashboard = () => {
     severity: "info",
   });
 
-  // Calculate container width
+  // Calculate container width - IMPORTANT FOR ALIGNMENT
   const getContainerWidth = () => {
     if (isMobile) return window.innerWidth - 32;
     if (isTablet) return window.innerWidth - 48;
@@ -229,6 +221,7 @@ const CustomDashboard = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  // Toggle visibility of widgets
   const handleToggleWidget = useCallback(
     (widgetKey) => {
       setVisibleWidgets((prev) => ({
@@ -270,6 +263,7 @@ const CustomDashboard = () => {
     [visibleWidgets, queryClient]
   );
 
+  // Show snackbar notifications
   const showSnackbar = (message, options = {}) => {
     setSnackbar({
       open: true,
@@ -424,105 +418,31 @@ const CustomDashboard = () => {
         </Alert>
       </Snackbar>
 
-      <Container maxWidth="xl">
+      {/* Main Content Container - IMPORTANT FOR ALIGNMENT */}
+      <Box
+        sx={{
+          maxWidth: containerWidth,
+          mx: "auto",
+          px: { xs: 2, sm: 3 },
+        }}
+      >
         {/* Dashboard Header */}
         <DashboardHeader />
 
-        {/* Dashboard Controls */}
-        <Paper
-          elevation={2}
-          sx={{
-            p: 2,
-            mb: 3,
-            borderRadius: 2,
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            alignItems: { xs: "flex-start", sm: "center" },
-            justifyContent: "space-between",
-            background: "linear-gradient(to right, #ffffff, #f9f9ff)",
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              mb: { xs: 2, sm: 0 },
-              flexWrap: { xs: "wrap", md: "nowrap" },
-              gap: 1,
-            }}
-          >
-            <Typography variant="subtitle1" fontWeight="medium" sx={{ mr: 1 }}>
-              Dashboard Controls
-            </Typography>
-
-            <Tooltip title="Refresh all data">
-              <IconButton
-                color="primary"
-                onClick={refreshAllData}
-                disabled={isRefreshing}
-                size="small"
-                sx={{ mr: 1 }}
-              >
-                <RefreshIcon className={isRefreshing ? "animate-spin" : ""} />
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title="Save layout">
-              <span>
-                <IconButton
-                  color="success"
-                  onClick={saveDashboardState}
-                  disabled={!hasUnsavedChanges}
-                  size="small"
-                  sx={{ mr: 1 }}
-                >
-                  <SaveIcon />
-                </IconButton>
-              </span>
-            </Tooltip>
-
-            <Tooltip title="Reset to default">
-              <IconButton color="warning" onClick={resetDashboard} size="small">
-                <RestoreIcon />
-              </IconButton>
-            </Tooltip>
-
-            <Chip
-              label={`${activeWidgetCount} active widgets`}
-              size="small"
-              color="primary"
-              variant="outlined"
-              sx={{ ml: { xs: 0, sm: 1 } }}
-            />
-          </Box>
-
-          <Box
-            sx={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 1,
-              maxWidth: { xs: "100%", md: "60%" },
-            }}
-          >
-            {Object.keys(initialWidgets).map((key) => (
-              <Chip
-                key={key}
-                icon={
-                  visibleWidgets[key] ? (
-                    <VisibilityIcon fontSize="small" />
-                  ) : (
-                    <VisibilityOffIcon fontSize="small" />
-                  )
-                }
-                label={widgetConfig[key].label}
-                variant={visibleWidgets[key] ? "default" : "outlined"}
-                onClick={() => handleToggleWidget(key)}
-                color={visibleWidgets[key] ? "primary" : "default"}
-                sx={{ borderRadius: "4px" }}
-              />
-            ))}
-          </Box>
-        </Paper>
+        {/* Dashboard Controls - Using the same width constraints as the GridLayout */}
+        <DashboardControls
+          theme={theme}
+          widgetConfig={widgetConfig}
+          initialWidgets={initialWidgets}
+          visibleWidgets={visibleWidgets}
+          isRefreshing={isRefreshing}
+          hasUnsavedChanges={hasUnsavedChanges}
+          refreshAllData={refreshAllData}
+          saveDashboardState={saveDashboardState}
+          resetDashboard={resetDashboard}
+          handleToggleWidget={handleToggleWidget}
+          activeWidgetCount={activeWidgetCount}
+        />
 
         {/* Responsive Grid Layout */}
         <Box
@@ -532,6 +452,9 @@ const CustomDashboard = () => {
               backgroundColor: theme.palette.primary.light,
               opacity: 0.3,
               borderRadius: 2,
+            },
+            ".react-grid-item": {
+              padding: "8px",
             },
           }}
         >
@@ -550,6 +473,11 @@ const CustomDashboard = () => {
             .react-grid-item {
               transition: all 200ms ease;
               transition-property: left, top, width, height;
+            }
+            .react-grid-item > div {
+              height: 100%;
+              width: 100%;
+              overflow: visible;
             }
           `}</style>
 
@@ -620,10 +548,9 @@ const CustomDashboard = () => {
                     title={widgetConfig.shipMap.label}
                     icon={widgetConfig.shipMap.icon}
                   >
-                    {/* Force remount with key */}
                     <div
                       key={`shipMap-content-${mountCounters.shipMap}`}
-                      style={{ height: "100%" }}
+                      style={{ height: "100%", minHeight: "400px" }}
                     >
                       <ShipMap />
                     </div>
@@ -638,10 +565,9 @@ const CustomDashboard = () => {
                     title={widgetConfig.shipInfo.label}
                     icon={widgetConfig.shipInfo.icon}
                   >
-                    {/* Force remount with key */}
                     <div
                       key={`shipInfo-content-${mountCounters.shipInfo}`}
-                      style={{ height: "100%" }}
+                      style={{ height: "100%", minHeight: "350px" }}
                     >
                       <AutoResizeBox>
                         <ShipInfoChart />
@@ -658,10 +584,9 @@ const CustomDashboard = () => {
                     title={widgetConfig.ssa.label}
                     icon={widgetConfig.ssa.icon}
                   >
-                    {/* Force remount with key */}
                     <div
                       key={`ssa-content-${mountCounters.ssa}`}
-                      style={{ height: "100%" }}
+                      style={{ height: "100%", minHeight: "350px" }}
                     >
                       <AutoResizeBox>
                         <SSAAssessmentsChart />
@@ -681,10 +606,9 @@ const CustomDashboard = () => {
                     title={widgetConfig.infractions.label}
                     icon={widgetConfig.infractions.icon}
                   >
-                    {/* Force remount with key */}
                     <div
                       key={`infractions-content-${mountCounters.infractions}`}
-                      style={{ height: "100%" }}
+                      style={{ height: "100%", minHeight: "350px" }}
                     >
                       <AutoResizeBox>
                         <InfractionsChart />
@@ -701,10 +625,9 @@ const CustomDashboard = () => {
                     title={widgetConfig.cargo.label}
                     icon={widgetConfig.cargo.icon}
                   >
-                    {/* Force remount with key */}
                     <div
                       key={`cargo-content-${mountCounters.cargo}`}
-                      style={{ height: "100%" }}
+                      style={{ height: "100%", minHeight: "350px" }}
                     >
                       <AutoResizeBox>
                         <CargoCapacityChart />
@@ -716,7 +639,7 @@ const CustomDashboard = () => {
             </GridLayout>
           )}
         </Box>
-      </Container>
+      </Box>
     </Box>
   );
 };

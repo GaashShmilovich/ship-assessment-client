@@ -6,7 +6,6 @@ import {
   Card,
   CardContent,
   Grid,
-  CircularProgress,
   Skeleton,
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
@@ -14,6 +13,7 @@ import { getAllShips, getAllInfractions } from "../../services/api";
 
 /**
  * DashboardHeader - Shows key metrics at the top of the dashboard
+ * Precisely aligned with map container below
  */
 const DashboardHeader = () => {
   // Fetch data for metrics
@@ -52,14 +52,26 @@ const DashboardHeader = () => {
 
   if (shipsLoading) {
     return (
-      <Box sx={{ mb: 4 }}>
-        <Grid container spacing={3}>
+      <Box sx={{ width: "100%", mb: 3 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            mb: 3,
+            textAlign: "left",
+            fontWeight: 500,
+          }}
+        >
+          <Skeleton width={300} />
+        </Typography>
+
+        <Grid container spacing={2}>
           {[1, 2, 3, 4].map((item) => (
             <Grid item xs={12} sm={6} md={3} key={item}>
               <Card>
                 <CardContent>
-                  <Skeleton animation="wave" height={30} width="50%" />
-                  <Skeleton animation="wave" height={50} width="70%" />
+                  <Skeleton animation="wave" height={24} width="60%" />
+                  <Skeleton animation="wave" height={40} width="40%" />
+                  <Skeleton animation="wave" height={20} width="70%" />
                 </CardContent>
               </Card>
             </Grid>
@@ -70,23 +82,56 @@ const DashboardHeader = () => {
   }
 
   return (
-    <Box sx={{ mb: 4 }}>
-      <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
+    // No container or max-width here to match parent container width exactly
+    <Box sx={{ width: 1200, mb: 3 }}>
+      <Typography
+        variant="h4"
+        sx={{
+          mb: 3,
+          textAlign: "left",
+          fontWeight: 500,
+          fontSize: { xs: "1.5rem", sm: "2rem" },
+        }}
+      >
         Maritime Security Dashboard
       </Typography>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={2}>
         {/* Total Ships */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ backgroundColor: "#f5f9ff" }}>
-            <CardContent>
-              <Typography variant="subtitle2" color="textSecondary">
+          <Card
+            sx={{
+              backgroundColor: "#f5f9ff",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+              height: "100%",
+            }}
+          >
+            <CardContent sx={{ p: 2 }}>
+              <Typography
+                variant="subtitle2"
+                color="textSecondary"
+                sx={{ fontSize: "0.8rem" }}
+              >
                 Total Ships
               </Typography>
-              <Typography variant="h3" sx={{ mt: 1, fontWeight: 600 }}>
+              <Typography
+                variant="h3"
+                sx={{
+                  my: 0.5,
+                  fontWeight: 500,
+                  fontSize: { xs: "2rem", sm: "2.5rem" },
+                }}
+              >
                 {stats?.totalShips || 0}
               </Typography>
-              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+              <Typography
+                variant="body2"
+                color="textSecondary"
+                sx={{
+                  fontSize: "0.75rem",
+                  mt: 0.5,
+                }}
+              >
                 {stats?.activeShips || 0} active
               </Typography>
             </CardContent>
@@ -95,15 +140,39 @@ const DashboardHeader = () => {
 
         {/* Under Review */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ backgroundColor: "#edf7ff" }}>
-            <CardContent>
-              <Typography variant="subtitle2" color="textSecondary">
+          <Card
+            sx={{
+              backgroundColor: "#edf7ff",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+              height: "100%",
+            }}
+          >
+            <CardContent sx={{ p: 2 }}>
+              <Typography
+                variant="subtitle2"
+                color="textSecondary"
+                sx={{ fontSize: "0.8rem" }}
+              >
                 Under Review
               </Typography>
-              <Typography variant="h3" sx={{ mt: 1, fontWeight: 600 }}>
+              <Typography
+                variant="h3"
+                sx={{
+                  my: 0.5,
+                  fontWeight: 500,
+                  fontSize: { xs: "2rem", sm: "2.5rem" },
+                }}
+              >
                 {stats?.underReview || 0}
               </Typography>
-              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+              <Typography
+                variant="body2"
+                color="textSecondary"
+                sx={{
+                  fontSize: "0.75rem",
+                  mt: 0.5,
+                }}
+              >
                 {((stats?.underReview / stats?.totalShips) * 100 || 0).toFixed(
                   1
                 )}
@@ -115,15 +184,39 @@ const DashboardHeader = () => {
 
         {/* In Quarantine */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ backgroundColor: "#fff5f5" }}>
-            <CardContent>
-              <Typography variant="subtitle2" color="textSecondary">
+          <Card
+            sx={{
+              backgroundColor: "#fff5f5",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+              height: "100%",
+            }}
+          >
+            <CardContent sx={{ p: 2 }}>
+              <Typography
+                variant="subtitle2"
+                color="textSecondary"
+                sx={{ fontSize: "0.8rem" }}
+              >
                 In Quarantine
               </Typography>
-              <Typography variant="h3" sx={{ mt: 1, fontWeight: 600 }}>
+              <Typography
+                variant="h3"
+                sx={{
+                  my: 0.5,
+                  fontWeight: 500,
+                  fontSize: { xs: "2rem", sm: "2.5rem" },
+                }}
+              >
                 {stats?.inQuarantine || 0}
               </Typography>
-              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+              <Typography
+                variant="body2"
+                color="textSecondary"
+                sx={{
+                  fontSize: "0.75rem",
+                  mt: 0.5,
+                }}
+              >
                 {((stats?.inQuarantine / stats?.totalShips) * 100 || 0).toFixed(
                   1
                 )}
@@ -135,15 +228,39 @@ const DashboardHeader = () => {
 
         {/* Total Infractions */}
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ backgroundColor: "#fffaf0" }}>
-            <CardContent>
-              <Typography variant="subtitle2" color="textSecondary">
+          <Card
+            sx={{
+              backgroundColor: "#fffaf0",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+              height: "100%",
+            }}
+          >
+            <CardContent sx={{ p: 2 }}>
+              <Typography
+                variant="subtitle2"
+                color="textSecondary"
+                sx={{ fontSize: "0.8rem" }}
+              >
                 Total Infractions
               </Typography>
-              <Typography variant="h3" sx={{ mt: 1, fontWeight: 600 }}>
+              <Typography
+                variant="h3"
+                sx={{
+                  my: 0.5,
+                  fontWeight: 500,
+                  fontSize: { xs: "2rem", sm: "2.5rem" },
+                }}
+              >
                 {stats?.totalInfractions || 0}
               </Typography>
-              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+              <Typography
+                variant="body2"
+                color="textSecondary"
+                sx={{
+                  fontSize: "0.75rem",
+                  mt: 0.5,
+                }}
+              >
                 {(stats?.totalInfractions / stats?.totalShips || 0).toFixed(1)}{" "}
                 per ship avg.
               </Typography>

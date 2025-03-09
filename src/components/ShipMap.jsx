@@ -1,3 +1,4 @@
+// This is the fixed ShipMap component that addresses the scrolling issue
 import React, {
   useState,
   useMemo,
@@ -193,6 +194,9 @@ const ShipMap = () => {
   const mapRef = useRef(null);
   const navigate = useNavigate();
 
+  // Create a ref to track the previous overflow style
+  const prevOverflowRef = useRef("");
+
   // Calculate map center from water areas
   const mapCenter = useMemo(
     () => [
@@ -237,15 +241,26 @@ const ShipMap = () => {
   }, [ships, statusFilter]);
 
   const handleMarkerClick = useCallback((ship) => {
+    // Save current overflow state before changing it
+    prevOverflowRef.current = document.body.style.overflow;
+    // Set body style for modal
+    document.body.style.overflow = "hidden";
     setSelectedShip(ship);
   }, []);
 
   const handleClose = useCallback(() => {
     setSelectedShip(null);
+    // Use setTimeout to ensure the dialog is fully closed before restoring scroll
+    setTimeout(() => {
+      // Restore previous overflow style or default to auto
+      document.body.style.overflow = prevOverflowRef.current || "auto";
+    }, 100);
   }, []);
 
   const handleViewDetails = useCallback(
     (fileId) => {
+      // Restore scrolling before navigation
+      document.body.style.overflow = prevOverflowRef.current || "auto";
       navigate(`/ship/${fileId}`);
     },
     [navigate]
@@ -253,25 +268,18 @@ const ShipMap = () => {
 
   // Handler for map click - close dialogs
   const handleMapClick = useCallback(() => {
-    setSelectedShip(null);
-  }, []);
+    if (selectedShip) {
+      handleClose();
+    }
+  }, [selectedShip, handleClose]);
 
-  // Prevent the dialog from causing jumps when opening/closing
+  // Ensure body scroll is properly restored on component unmount
   useEffect(() => {
-    const handleBodyScroll = (open) => {
-      if (open) {
-        document.body.style.overflow = "hidden";
-      } else {
-        document.body.style.overflow = "";
-      }
-    };
-
-    handleBodyScroll(Boolean(selectedShip));
-
+    // Cleanup function to ensure body scroll is restored when the component unmounts
     return () => {
-      handleBodyScroll(false);
+      document.body.style.overflow = "auto";
     };
-  }, [selectedShip]);
+  }, []);
 
   // Add custom map styles via CSS
   useEffect(() => {
@@ -609,13 +617,14 @@ const ShipMap = () => {
         </Paper>
       </Box>
 
-      {/* Ship Details Dialog */}
+      {/* Ship Details Dialog - Using disableScrollLock to prevent scroll issues */}
       <Dialog
         open={Boolean(selectedShip)}
         onClose={handleClose}
         fullWidth
         maxWidth="sm"
         keepMounted={false}
+        disableScrollLock={true}
         disableRestoreFocus
         aria-labelledby="ship-dialog-title"
         PaperProps={{
