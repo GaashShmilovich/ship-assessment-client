@@ -103,117 +103,91 @@ const PortActivityTimeline = () => {
     );
   }
 
-  return (
-    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      <Typography
-        variant="h6"
-        sx={{ mb: 2, display: "flex", alignItems: "center" }}
-      >
-        <EventIcon sx={{ mr: 1 }} />
-        Port Activity Timeline
-      </Typography>
-
-      {timelineEvents.length === 0 ? (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100%",
-          }}
+  // THIS IS THE CRUCIAL FIX - create a custom render function for each timeline item
+  const renderTimelineItem = (event, index) => {
+    // Create the secondary content separately so we can control the HTML structure
+    const secondaryContent = (
+      <>
+        <Typography
+          variant="body2"
+          color="textSecondary"
+          component="span"
+          sx={{ display: "block" }}
         >
-          <Typography variant="body2" color="text.secondary">
-            No recent port activity
-          </Typography>
-        </Box>
-      ) : (
-        <Box sx={{ overflow: "auto", flexGrow: 1 }}>
-          <List>
-            {timelineEvents.map((event, index) => (
-              <ListItem
-                key={index}
-                sx={{
-                  mb: 2,
-                  p: 0,
-                  alignItems: "flex-start",
-                }}
+          {event.date.toLocaleString()}
+        </Typography>
+
+        <Card variant="outlined" sx={{ mt: 1, borderRadius: 2 }}>
+          <CardContent sx={{ py: 1, px: 2, "&:last-child": { pb: 1 } }}>
+            {event.type === "infraction" ? (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                component="div"
               >
-                <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: getEventColor(event) }}>
-                    {getEventIcon(event)}
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={
-                    <Typography
-                      variant="subtitle1"
-                      sx={{ fontWeight: "medium" }}
-                    >
-                      {getEventTitle(event)}
-                    </Typography>
-                  }
-                  secondary={
-                    <Card
-                      variant="outlined"
-                      sx={{
-                        mt: 1,
-                        cursor: "pointer",
-                        "&:hover": { bgcolor: "rgba(0, 0, 0, 0.04)" },
-                      }}
-                      onClick={() => navigate(`/ship/${event.ship.id}`)}
-                    >
-                      <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          display="block"
-                        >
-                          {event.date.toLocaleDateString()}{" "}
-                          {event.date.toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </Typography>
-
-                        {event.port && (
-                          <Typography variant="body2" sx={{ mt: 1 }}>
-                            {event.port}, {event.country}
-                          </Typography>
-                        )}
-
-                        {event.details && (
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ mt: 1 }}
-                          >
-                            {event.details}
-                          </Typography>
-                        )}
-
-                        {event.isHighRisk && (
-                          <Chip
-                            size="small"
-                            icon={<WarningIcon />}
-                            label={event.riskReason || "High Risk"}
-                            color="error"
-                            variant="outlined"
-                            sx={{ mt: 1 }}
-                          />
-                        )}
-                      </CardContent>
-                    </Card>
-                  }
-                />
-                {index < timelineEvents.length - 1 && (
-                  <Divider component="li" sx={{ mt: 2 }} />
+                {event.details || "No details available"}
+              </Typography>
+            ) : (
+              <>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  component="div"
+                >
+                  {`Port: ${event.port}, ${event.country}`}
+                </Typography>
+                {event.isHighRisk && (
+                  <Chip
+                    icon={<WarningIcon />}
+                    label="High Risk Port"
+                    size="small"
+                    color="error"
+                    sx={{ mt: 1 }}
+                  />
                 )}
-              </ListItem>
-            ))}
-          </List>
-        </Box>
-      )}
-    </Box>
+                {event.riskReason && (
+                  <Typography
+                    variant="body2"
+                    color="error"
+                    component="div"
+                    sx={{ mt: 1 }}
+                  >
+                    {event.riskReason}
+                  </Typography>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </>
+    );
+
+    return (
+      <ListItem key={index} sx={{ mb: 2, p: 0, alignItems: "flex-start" }}>
+        <ListItemAvatar>
+          <Avatar sx={{ bgcolor: getEventColor(event) }}>
+            {getEventIcon(event)}
+          </Avatar>
+        </ListItemAvatar>
+
+        <ListItemText
+          primary={
+            <Typography variant="body1" color="textPrimary">
+              {getEventTitle(event)}
+            </Typography>
+          }
+          // THE CRITICAL FIX: Use a wrapper span for secondary content and set disableTypography to true
+          secondary={<span>{secondaryContent}</span>}
+          disableTypography={true}
+        />
+      </ListItem>
+    );
+  };
+
+  return (
+    <List sx={{ width: "100%", py: 0 }}>
+      {timelineEvents.slice(0, 5).map(renderTimelineItem)}
+    </List>
   );
 };
 

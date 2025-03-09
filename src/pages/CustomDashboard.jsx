@@ -91,51 +91,51 @@ const widgetConfig = {
   },
 };
 
-// Default layout - INCREASED HEIGHT VALUES
+// UPDATED LAYOUT: Map first, Document Expiry second, then 2 widgets per row (1 per column)
 const getDefaultLayout = (width) => {
   const cols = width < 600 ? 1 : width < 960 ? 2 : 12;
 
-  // For mobile: Stack all widgets with increased heights
+  // For mobile: Stack all widgets
   if (cols === 1) {
     return [
-      { i: "shipMap", x: 0, y: 0, w: 1, h: 20, static: false }, // Increased from 16
-      { i: "riskAlerts", x: 0, y: 20, w: 1, h: 14, static: false }, // Increased from 12
-      { i: "docExpiry", x: 0, y: 34, w: 1, h: 14, static: false }, // Increased from 12
-      { i: "shipInfo", x: 0, y: 48, w: 1, h: 14, static: false }, // Increased from 12
-      { i: "securityMetrics", x: 0, y: 62, w: 1, h: 14, static: false }, // Increased from 12
-      { i: "timeline", x: 0, y: 76, w: 1, h: 16, static: false }, // Increased from 14
-      { i: "ssa", x: 0, y: 92, w: 1, h: 14, static: false }, // Increased from 12
-      { i: "infractions", x: 0, y: 106, w: 1, h: 14, static: false }, // Increased from 12
-      { i: "cargo", x: 0, y: 120, w: 1, h: 14, static: false }, // Increased from 12
+      { i: "shipMap", x: 0, y: 0, w: 1, h: 14, static: false },
+      { i: "docExpiry", x: 0, y: 14, w: 1, h: 8, static: false },
+      { i: "riskAlerts", x: 0, y: 22, w: 1, h: 8, static: false },
+      { i: "shipInfo", x: 0, y: 30, w: 1, h: 8, static: false },
+      { i: "securityMetrics", x: 0, y: 38, w: 1, h: 8, static: false },
+      { i: "timeline", x: 0, y: 46, w: 1, h: 8, static: false },
+      { i: "ssa", x: 0, y: 54, w: 1, h: 8, static: false },
+      { i: "infractions", x: 0, y: 62, w: 1, h: 8, static: false },
+      { i: "cargo", x: 0, y: 70, w: 1, h: 8, static: false },
     ];
   }
 
-  // For tablet: Two column layout with increased heights
+  // For tablet: Two column layout
   if (cols === 2) {
     return [
-      { i: "shipMap", x: 0, y: 0, w: 2, h: 20, static: false }, // Increased from 16
-      { i: "riskAlerts", x: 0, y: 20, w: 1, h: 14, static: false }, // Increased from 12
-      { i: "docExpiry", x: 1, y: 20, w: 1, h: 14, static: false }, // Increased from 12
-      { i: "shipInfo", x: 0, y: 34, w: 1, h: 14, static: false }, // Increased from 12
-      { i: "securityMetrics", x: 1, y: 34, w: 1, h: 14, static: false }, // Increased from 12
-      { i: "timeline", x: 0, y: 48, w: 2, h: 16, static: false }, // Increased from 14
-      { i: "ssa", x: 0, y: 64, w: 1, h: 14, static: false }, // Increased from 12
-      { i: "infractions", x: 1, y: 64, w: 1, h: 14, static: false }, // Increased from 12
-      { i: "cargo", x: 0, y: 78, w: 2, h: 14, static: false }, // Increased from 12
+      { i: "shipMap", x: 0, y: 0, w: 2, h: 14, static: false }, // Full width
+      { i: "docExpiry", x: 0, y: 14, w: 2, h: 8, static: false }, // Full width
+      { i: "riskAlerts", x: 0, y: 22, w: 1, h: 8, static: false }, // Left column
+      { i: "shipInfo", x: 1, y: 22, w: 1, h: 8, static: false }, // Right column
+      { i: "securityMetrics", x: 0, y: 30, w: 1, h: 8, static: false }, // Left column
+      { i: "timeline", x: 1, y: 30, w: 1, h: 8, static: false }, // Right column
+      { i: "ssa", x: 0, y: 38, w: 1, h: 8, static: false }, // Left column
+      { i: "infractions", x: 1, y: 38, w: 1, h: 8, static: false }, // Right column
+      { i: "cargo", x: 0, y: 46, w: 1, h: 8, static: false }, // Left column
     ];
   }
 
-  // Default (desktop) layout with increased heights
+  // Default (desktop) layout - Map first, DocExpiry second, then 2 per row
   return [
-    { i: "shipMap", x: 0, y: 0, w: 8, h: 20, static: false }, // Increased from 18
-    { i: "riskAlerts", x: 8, y: 0, w: 4, h: 10, static: false }, // Increased from 9
-    { i: "docExpiry", x: 8, y: 10, w: 4, h: 10, static: false }, // Increased from 9
-    { i: "shipInfo", x: 0, y: 20, w: 4, h: 14, static: false }, // Increased from 12
-    { i: "securityMetrics", x: 4, y: 20, w: 4, h: 14, static: false }, // Increased from 12
-    { i: "timeline", x: 8, y: 20, w: 4, h: 14, static: false }, // Increased from 12
-    { i: "ssa", x: 0, y: 34, w: 4, h: 14, static: false }, // Increased from 12
-    { i: "infractions", x: 4, y: 34, w: 4, h: 14, static: false }, // Increased from 12
-    { i: "cargo", x: 8, y: 34, w: 4, h: 14, static: false }, // Increased from 12
+    { i: "shipMap", x: 0, y: 0, w: 12, h: 10, static: false }, // Full width
+    { i: "docExpiry", x: 0, y: 10, w: 12, h: 6, static: false }, // Full width
+    { i: "riskAlerts", x: 0, y: 16, w: 6, h: 6, static: false }, // Left column
+    { i: "shipInfo", x: 6, y: 16, w: 6, h: 6, static: false }, // Right column
+    { i: "securityMetrics", x: 0, y: 22, w: 6, h: 6, static: false }, // Left column
+    { i: "timeline", x: 6, y: 22, w: 6, h: 6, static: false }, // Right column
+    { i: "ssa", x: 0, y: 28, w: 6, h: 6, static: false }, // Left column
+    { i: "infractions", x: 6, y: 28, w: 6, h: 6, static: false }, // Right column
+    { i: "cargo", x: 0, y: 34, w: 6, h: 6, static: false }, // Left column (last row)
   ];
 };
 
@@ -286,22 +286,64 @@ const CustomDashboard = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  // Force all widgets to be visible by default
+  useEffect(() => {
+    setVisibleWidgets({ ...initialWidgets });
+  }, []);
+
   // Toggle visibility of widgets
   const handleToggleWidget = useCallback(
     (widgetKey) => {
+      // Get the current visibility state
+      const isCurrentlyVisible = visibleWidgets[widgetKey];
+
+      // Update visibility state
       setVisibleWidgets((prev) => ({
         ...prev,
         [widgetKey]: !prev[widgetKey],
       }));
 
-      if (!visibleWidgets[widgetKey]) {
+      // If we're making the widget visible again
+      if (!isCurrentlyVisible) {
+        // Increment the mount counter to force remount
         setMountCounters((prev) => ({
           ...prev,
           [widgetKey]: (prev[widgetKey] || 0) + 1,
         }));
 
+        // Find the default layout for this widget
+        const defaultWidgetLayout = getDefaultLayout(containerWidth).find(
+          (item) => item.i === widgetKey
+        );
+
+        // Update the layout with the default size/position for this widget
+        if (defaultWidgetLayout) {
+          setLayout((currentLayout) => {
+            // Check if widget exists in current layout
+            const existingWidgetIndex = currentLayout.findIndex(
+              (item) => item.i === widgetKey
+            );
+
+            if (existingWidgetIndex >= 0) {
+              // Update existing widget with default height and width
+              const newLayout = [...currentLayout];
+              newLayout[existingWidgetIndex] = {
+                ...newLayout[existingWidgetIndex],
+                w: defaultWidgetLayout.w,
+                h: defaultWidgetLayout.h,
+                x: defaultWidgetLayout.x,
+                y: defaultWidgetLayout.y,
+              };
+              return newLayout;
+            } else {
+              // Add widget with default layout
+              return [...currentLayout, defaultWidgetLayout];
+            }
+          });
+        }
+
+        // Refresh the relevant queries
         setTimeout(() => {
-          // Refresh the relevant queries based on the widget type
           switch (widgetKey) {
             case "shipMap":
             case "shipInfo":
@@ -337,7 +379,7 @@ const CustomDashboard = () => {
 
       setHasUnsavedChanges(true);
     },
-    [visibleWidgets, queryClient]
+    [visibleWidgets, queryClient, containerWidth]
   );
 
   // Show snackbar notifications
@@ -433,8 +475,20 @@ const CustomDashboard = () => {
           setLayout(parsed.layout);
         }
 
+        // Modify this part to ensure all widgets are visible by default
+        // This combines saved widget visibility with initialWidgets, favoring "true" values
         if (parsed.activeWidgets) {
-          setVisibleWidgets(parsed.activeWidgets);
+          setVisibleWidgets((prev) => {
+            const combinedWidgets = { ...initialWidgets };
+            // Only take saved widget state if it's "true", otherwise use the initialWidgets value
+            Object.keys(initialWidgets).forEach((key) => {
+              combinedWidgets[key] =
+                parsed.activeWidgets[key] === false
+                  ? true
+                  : initialWidgets[key];
+            });
+            return combinedWidgets;
+          });
         }
       }
     } catch (error) {
@@ -460,8 +514,24 @@ const CustomDashboard = () => {
   }, [queryClient]);
 
   // Filter layout items based on visible widgets
-  const filteredLayout = layout.filter((item) => visibleWidgets[item.i]);
+  const filteredLayout = layout
+    .map((item) => {
+      // If this widget is in the default layout, use those dimensions
+      const defaultItem = getDefaultLayout(containerWidth).find(
+        (defaultItem) => defaultItem.i === item.i
+      );
 
+      if (defaultItem && visibleWidgets[item.i]) {
+        // Ensure minimum dimensions
+        return {
+          ...item,
+          w: Math.max(item.w, defaultItem.w),
+          h: Math.max(item.h, defaultItem.h),
+        };
+      }
+      return item;
+    })
+    .filter((item) => visibleWidgets[item.i]);
   // Handle layout change
   const handleLayoutChange = (newLayout) => {
     setLayout(newLayout);
@@ -615,7 +685,7 @@ const CustomDashboard = () => {
               className="layout"
               layout={filteredLayout}
               cols={isMobile ? 1 : isTablet ? 2 : 12}
-              rowHeight={70} // INCREASED from 50 to give more space
+              rowHeight={70}
               width={containerWidth}
               onLayoutChange={handleLayoutChange}
               draggableHandle=".drag-handle"
