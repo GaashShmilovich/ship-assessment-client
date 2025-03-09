@@ -1,11 +1,6 @@
-// src/components/AutoResizeBox.jsx - Fixed version
 import React, { useRef, useEffect, useState } from "react";
 import { Box } from "@mui/material";
 
-/**
- * A component that wraps content and detects size changes
- * Properly handles resize events and notifies children through props
- */
 const AutoResizeBox = ({ children, sx = {}, onResize }) => {
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -89,7 +84,7 @@ const AutoResizeBox = ({ children, sx = {}, onResize }) => {
             ...child.props.style,
             width: "100%",
             height: "100%",
-            minHeight: 300, // Ensure minimum height for charts
+            // Removed minHeight that was causing issues
           },
         });
       }
@@ -103,10 +98,11 @@ const AutoResizeBox = ({ children, sx = {}, onResize }) => {
       sx={{
         height: "100%",
         width: "100%",
-        minHeight: 300, // Ensure component has minimum height
+        flex: 1, // This is crucial for proper flex behavior
         display: "flex",
         flexDirection: "column",
         position: "relative",
+        overflow: "visible", // Allow content to flow naturally
         ...sx,
       }}
       data-dimensions={`${dimensions.width}x${dimensions.height}`}
