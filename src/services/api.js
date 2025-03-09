@@ -7,23 +7,18 @@ const apiClient = axios.create({
     headers: {
         "Content-Type": "application/json",
     },
-    timeout: 15000, // 15 seconds timeout
+    timeout: 15000,
 })
 
-// Add a response interceptor for error handling
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        // Format errors in a consistent way
         let message = 'An unexpected error occurred. Please try again later.'
         let statusCode = 500
 
         if (error.response) {
-            // The request was made and the server responded with a status code
-            // outside the 2xx range
             statusCode = error.response.status
 
-            // Try to get error message from response
             if (error.response.data) {
                 if (typeof error.response.data === 'string') {
                     message = error.response.data
@@ -34,28 +29,23 @@ apiClient.interceptors.response.use(
                 }
             }
 
-            // Customize message for common status codes
             if (statusCode === 401) {
                 message = 'Your session has expired. Please login again.'
-                // Could handle auto-logout here
             } else if (statusCode === 403) {
                 message = 'You do not have permission to perform this action.'
             } else if (statusCode === 404) {
                 message = 'The requested resource was not found.'
             }
         } else if (error.request) {
-            // The request was made but no response was received
             message = 'No response received from server. Please check your connection.'
             statusCode = 0
         }
 
-        // Log errors in development
         if (process.env.NODE_ENV !== 'production') {
             console.error(`API Error (${statusCode}):`, message)
             console.error(error)
         }
 
-        // Attach formatted details to the error
         error.formattedMessage = message
         error.statusCode = statusCode
 
@@ -63,13 +53,10 @@ apiClient.interceptors.response.use(
     }
 )
 
-// Add request interceptor for auth token
 apiClient.interceptors.request.use(
     (config) => {
-        // Get auth token from storage
         const token = localStorage.getItem('authToken')
 
-        // If token exists, add to headers
         if (token) {
             config.headers.Authorization = `Bearer ${token}`
         }
@@ -120,8 +107,6 @@ export const getCurrentlyDockedShips = () => apiClient.get("/harbor-history/curr
 export const getHistoriesAfterDate = (date) =>
     apiClient.get("/harbor-history/arrived-after", { params: { date } })
 
-// Add a health check endpoint
 export const checkApiHealth = () => apiClient.get('/health')
 
-// Export the enhanced API client for direct use if needed
 export { apiClient }
