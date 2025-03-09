@@ -39,7 +39,20 @@ import {
   InputLabel,
   useTheme,
   Fade,
+  Paper,
+  Divider,
+  IconButton,
+  Stack,
+  Tooltip as MuiTooltip,
+  Button,
 } from "@mui/material";
+import SortIcon from "@mui/icons-material/Sort";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import DirectionsBoatIcon from "@mui/icons-material/DirectionsBoat";
+import DoneIcon from "@mui/icons-material/Done";
+import BuildIcon from "@mui/icons-material/Build";
+import WarningIcon from "@mui/icons-material/Warning";
+import ErrorIcon from "@mui/icons-material/Error";
 
 // Register necessary Chart.js components
 ChartJS.register(
@@ -142,9 +155,9 @@ const ShipInfoChart = ({ containerDimensions }) => {
     const formattedLabels = statusItems.map((item) => item.formattedStatus);
     const counts = statusItems.map((item) => item.count);
 
-    // Create background and border colors
-    const backgroundColors = orderedStatuses.map((status) =>
-      getStatusColor(status, 0.7)
+    // Create enhanced background and border colors with higher contrast
+    const backgroundColors = orderedStatuses.map(
+      (status) => getStatusColor(status, 0.85) // Increased opacity for better contrast
     );
 
     const borderColors = orderedStatuses.map((status) =>
@@ -159,8 +172,8 @@ const ShipInfoChart = ({ containerDimensions }) => {
           data: counts,
           backgroundColor: backgroundColors,
           borderColor: borderColors,
-          borderWidth: 1,
-          borderRadius: 4,
+          borderWidth: 1.5, // Slightly thicker border
+          borderRadius: 6, // Increased radius for more modern look
           barThickness: 40,
           maxBarThickness: 60,
         },
@@ -187,12 +200,12 @@ const ShipInfoChart = ({ containerDimensions }) => {
       ...animationOptions,
       responsive: true,
       maintainAspectRatio: false,
-      indexAxis: isNarrow ? "y" : "y", // Always horizontal bar for this chart
+      indexAxis: "y", // Always horizontal bar for this chart
       layout: {
         padding: {
           top: 20,
           bottom: 10,
-          right: 30, // Extra padding for value labels on bars
+          right: 40, // Extra padding for value labels on bars
           left: isNarrow ? 100 : 20, // More padding for labels in narrow view
         },
       },
@@ -206,19 +219,27 @@ const ShipInfoChart = ({ containerDimensions }) => {
           ticks: {
             precision: 0,
             font: {
-              size: isNarrow ? 10 : 12,
+              size: isNarrow ? 11 : 13,
+              weight: "bold", // Make status labels bold
             },
+            color: theme.palette.text.primary, // Use theme colors
           },
         },
         x: {
           grid: {
-            display: false,
+            display: true,
+            color: "rgba(0, 0, 0, 0.05)", // Lighter grid lines
+            drawBorder: false,
           },
           ticks: {
             precision: 0,
             font: {
               size: isNarrow ? 10 : 12,
             },
+            color: theme.palette.text.secondary,
+          },
+          border: {
+            display: false, // Remove border
           },
         },
       },
@@ -229,6 +250,13 @@ const ShipInfoChart = ({ containerDimensions }) => {
         },
         tooltip: {
           ...animationOptions.plugins.tooltip,
+          backgroundColor: "rgba(0, 0, 0, 0.85)",
+          titleFont: {
+            size: 14,
+            weight: "bold",
+          },
+          padding: 12,
+          cornerRadius: 6,
           callbacks: {
             label: function (context) {
               const value = context.raw;
@@ -243,9 +271,9 @@ const ShipInfoChart = ({ containerDimensions }) => {
 
     // Apply responsive options based on container dimensions
     return getResponsiveOptions(containerDimensions, baseOptions);
-  }, [containerDimensions, chartData]);
+  }, [containerDimensions, chartData, theme]);
 
-  // Render the data values on the bars
+  // Render the data values on the bars with enhanced styling
   const plugins = useMemo(
     () => [
       {
@@ -278,17 +306,24 @@ const ShipInfoChart = ({ containerDimensions }) => {
                     }
                   : element;
 
-                ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-                ctx.font =
+                ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+                ctx.font = `bold ${
                   containerDimensions && containerDimensions.width < 400
-                    ? "10px sans-serif"
-                    : "11px sans-serif";
+                    ? "10px"
+                    : "12px"
+                } sans-serif`;
                 ctx.textAlign = "left";
                 ctx.textBaseline = "middle";
 
                 // For horizontal bar chart
                 const xPos = x + width / 2 + 10; // Position right of the bar
                 const yPos = y;
+
+                // Add subtle text shadow for better readability
+                ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
+                ctx.shadowBlur = 2;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
 
                 ctx.fillText(`${value} (${percentage}%)`, xPos, yPos);
                 ctx.restore();
@@ -311,38 +346,94 @@ const ShipInfoChart = ({ containerDimensions }) => {
     setSortBy(event.target.value);
   };
 
+  // Get status icon based on status
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "ACTIVE":
+        return <DoneIcon fontSize="small" />;
+      case "MAINTENANCE":
+        return <BuildIcon fontSize="small" />;
+      case "UNDER_REVIEW":
+        return <WarningIcon fontSize="small" />;
+      case "QUARANTINE":
+        return <ErrorIcon fontSize="small" />;
+      default:
+        return <DirectionsBoatIcon fontSize="small" />;
+    }
+  };
+
   return (
-    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      <Box
+    <Box
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        px: 0.5, // Add slight padding for better spacing
+      }}
+    >
+      {/* Enhanced header with visual separation */}
+      <Paper
+        elevation={0}
         sx={{
-          mb: 1,
+          mb: 2,
+          p: 1.5,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          background: theme.palette.background.paper,
+          borderRadius: 2,
+          border: `1px solid ${theme.palette.divider}`,
         }}
       >
-        <Box>
-          <Typography variant="subtitle1" fontWeight="medium">
-            Ship Status Overview
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Current status distribution across the fleet
-          </Typography>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <BarChartIcon
+            sx={{
+              mr: 1.5,
+              color: theme.palette.primary.main,
+              fontSize: 24,
+            }}
+          />
+          <Box>
+            <Typography variant="subtitle1" fontWeight="medium">
+              Ship Status Overview
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Current status distribution across the fleet
+            </Typography>
+          </Box>
         </Box>
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel id="sort-select-label">Sort By</InputLabel>
-          <Select
-            labelId="sort-select-label"
-            value={sortBy}
-            label="Sort By"
-            onChange={handleSortChange}
-          >
-            <MenuItem value="status">Status Priority</MenuItem>
-            <MenuItem value="count">Count (Descending)</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
 
+        {/* Enhanced sort selector */}
+        <MuiTooltip title="Change sorting method">
+          <FormControl
+            size="small"
+            sx={{
+              minWidth: 140,
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+              },
+            }}
+          >
+            <InputLabel
+              id="sort-select-label"
+              sx={{ display: "flex", alignItems: "center" }}
+            >
+              <SortIcon sx={{ mr: 0.5, fontSize: 18 }} /> Sort By
+            </InputLabel>
+            <Select
+              labelId="sort-select-label"
+              value={sortBy}
+              label="Sort By"
+              onChange={handleSortChange}
+            >
+              <MenuItem value="status">Status Priority</MenuItem>
+              <MenuItem value="count">Count (Descending)</MenuItem>
+            </Select>
+          </FormControl>
+        </MuiTooltip>
+      </Paper>
+
+      {/* Chart in enhanced wrapper */}
       <ChartWrapper
         isLoading={isLoading}
         error={error}
@@ -350,43 +441,87 @@ const ShipInfoChart = ({ containerDimensions }) => {
         exportChart={handleExport}
         containerDimensions={containerDimensions}
       >
-        <Box sx={{ flex: 1, minHeight: "220px", position: "relative" }}>
-          {chartData && (
-            <Bar
-              ref={chartRef}
-              data={chartData}
-              options={options}
-              plugins={plugins}
-              style={{ maxHeight: "100%" }}
-            />
-          )}
+        <Box
+          sx={{
+            height: "calc(100% - 40px)",
+            display: "flex",
+            flexDirection: "column",
+            pt: 1,
+          }}
+        >
+          <Bar
+            ref={chartRef}
+            data={chartData}
+            options={{
+              ...options,
+              maintainAspectRatio: false,
+              responsive: true,
+            }}
+            plugins={plugins}
+          />
         </Box>
       </ChartWrapper>
 
-      {/* Summary Cards */}
+      {/* Enhanced Summary Cards */}
       {chartData && chartData._summary && (
         <Fade in={true} timeout={800}>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid
+            container
+            spacing={2}
+            sx={{
+              mt: 2,
+              "& .MuiCard-root": {
+                overflow: "visible", // Allow shadow to be visible on hover
+              },
+            }}
+          >
             <Grid item xs={6} md={3}>
               <Card
-                variant="outlined"
+                elevation={1} // Using elevation instead of variant outlined
                 sx={{
-                  backgroundColor: "success.light",
-                  transition: "transform 0.3s ease",
+                  background: `linear-gradient(145deg, ${theme.palette.success.light}, ${theme.palette.success.main}90)`,
+                  color: theme.palette.success.contrastText,
+                  borderRadius: 2,
+                  transition: "all 0.3s ease",
+                  position: "relative",
+                  overflow: "visible",
                   "&:hover": {
                     transform: "translateY(-4px)",
-                    boxShadow: 2,
+                    boxShadow: 4,
                   },
                 }}
               >
-                <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
-                  <Typography color="text.secondary" variant="caption">
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: -10,
+                    left: 10,
+                    bgcolor: theme.palette.success.dark,
+                    borderRadius: "50%",
+                    width: 36,
+                    height: 36,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: 2,
+                  }}
+                >
+                  <DoneIcon sx={{ color: "#fff" }} />
+                </Box>
+                <CardContent
+                  sx={{ p: 1.5, pt: 2, "&:last-child": { pb: 1.5 } }}
+                >
+                  <Typography
+                    variant="caption"
+                    fontWeight="medium"
+                    sx={{ opacity: 0.85 }}
+                  >
                     Active Ships
                   </Typography>
-                  <Typography variant="h6">
+                  <Typography variant="h5" sx={{ mt: 0.5, fontWeight: "bold" }}>
                     {chartData._summary.activeCount}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{ opacity: 0.85 }}>
                     {Math.round(
                       (chartData._summary.activeCount /
                         chartData._summary.total) *
@@ -397,26 +532,54 @@ const ShipInfoChart = ({ containerDimensions }) => {
                 </CardContent>
               </Card>
             </Grid>
+
             <Grid item xs={6} md={3}>
               <Card
-                variant="outlined"
+                elevation={1}
                 sx={{
-                  backgroundColor: "warning.light",
-                  transition: "transform 0.3s ease",
+                  background: `linear-gradient(145deg, ${theme.palette.warning.light}, ${theme.palette.warning.main}90)`,
+                  color: theme.palette.warning.contrastText,
+                  borderRadius: 2,
+                  transition: "all 0.3s ease",
+                  position: "relative",
+                  overflow: "visible",
                   "&:hover": {
                     transform: "translateY(-4px)",
-                    boxShadow: 2,
+                    boxShadow: 4,
                   },
                 }}
               >
-                <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
-                  <Typography color="text.secondary" variant="caption">
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: -10,
+                    left: 10,
+                    bgcolor: theme.palette.warning.dark,
+                    borderRadius: "50%",
+                    width: 36,
+                    height: 36,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: 2,
+                  }}
+                >
+                  <WarningIcon sx={{ color: "#fff" }} />
+                </Box>
+                <CardContent
+                  sx={{ p: 1.5, pt: 2, "&:last-child": { pb: 1.5 } }}
+                >
+                  <Typography
+                    variant="caption"
+                    fontWeight="medium"
+                    sx={{ opacity: 0.85 }}
+                  >
                     Under Review
                   </Typography>
-                  <Typography variant="h6">
+                  <Typography variant="h5" sx={{ mt: 0.5, fontWeight: "bold" }}>
                     {chartData._summary.reviewCount}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{ opacity: 0.85 }}>
                     {Math.round(
                       (chartData._summary.reviewCount /
                         chartData._summary.total) *
@@ -427,26 +590,54 @@ const ShipInfoChart = ({ containerDimensions }) => {
                 </CardContent>
               </Card>
             </Grid>
+
             <Grid item xs={6} md={3}>
               <Card
-                variant="outlined"
+                elevation={1}
                 sx={{
-                  backgroundColor: "error.light",
-                  transition: "transform 0.3s ease",
+                  background: `linear-gradient(145deg, ${theme.palette.error.light}, ${theme.palette.error.main}90)`,
+                  color: theme.palette.error.contrastText,
+                  borderRadius: 2,
+                  transition: "all 0.3s ease",
+                  position: "relative",
+                  overflow: "visible",
                   "&:hover": {
                     transform: "translateY(-4px)",
-                    boxShadow: 2,
+                    boxShadow: 4,
                   },
                 }}
               >
-                <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
-                  <Typography color="text.secondary" variant="caption">
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: -10,
+                    left: 10,
+                    bgcolor: theme.palette.error.dark,
+                    borderRadius: "50%",
+                    width: 36,
+                    height: 36,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: 2,
+                  }}
+                >
+                  <ErrorIcon sx={{ color: "#fff" }} />
+                </Box>
+                <CardContent
+                  sx={{ p: 1.5, pt: 2, "&:last-child": { pb: 1.5 } }}
+                >
+                  <Typography
+                    variant="caption"
+                    fontWeight="medium"
+                    sx={{ opacity: 0.85 }}
+                  >
                     In Quarantine
                   </Typography>
-                  <Typography variant="h6">
+                  <Typography variant="h5" sx={{ mt: 0.5, fontWeight: "bold" }}>
                     {chartData._summary.quarantineCount}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{ opacity: 0.85 }}>
                     {Math.round(
                       (chartData._summary.quarantineCount /
                         chartData._summary.total) *
@@ -457,26 +648,54 @@ const ShipInfoChart = ({ containerDimensions }) => {
                 </CardContent>
               </Card>
             </Grid>
+
             <Grid item xs={6} md={3}>
               <Card
-                variant="outlined"
+                elevation={1}
                 sx={{
-                  backgroundColor: "primary.light",
-                  transition: "transform 0.3s ease",
+                  background: `linear-gradient(145deg, ${theme.palette.primary.light}, ${theme.palette.primary.main}90)`,
+                  color: theme.palette.primary.contrastText,
+                  borderRadius: 2,
+                  transition: "all 0.3s ease",
+                  position: "relative",
+                  overflow: "visible",
                   "&:hover": {
                     transform: "translateY(-4px)",
-                    boxShadow: 2,
+                    boxShadow: 4,
                   },
                 }}
               >
-                <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
-                  <Typography color="text.secondary" variant="caption">
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: -10,
+                    left: 10,
+                    bgcolor: theme.palette.primary.dark,
+                    borderRadius: "50%",
+                    width: 36,
+                    height: 36,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: 2,
+                  }}
+                >
+                  <BuildIcon sx={{ color: "#fff" }} />
+                </Box>
+                <CardContent
+                  sx={{ p: 1.5, pt: 2, "&:last-child": { pb: 1.5 } }}
+                >
+                  <Typography
+                    variant="caption"
+                    fontWeight="medium"
+                    sx={{ opacity: 0.85 }}
+                  >
                     Maintenance
                   </Typography>
-                  <Typography variant="h6">
+                  <Typography variant="h5" sx={{ mt: 0.5, fontWeight: "bold" }}>
                     {chartData._summary.maintenanceCount}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{ opacity: 0.85 }}>
                     {Math.round(
                       (chartData._summary.maintenanceCount /
                         chartData._summary.total) *

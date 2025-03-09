@@ -31,16 +31,13 @@ const AutoResizeBox = ({ children, sx = {}, onResize }) => {
       }
     });
 
-    // Start observing the container
     resizeObserver.observe(containerRef.current);
 
-    // Clean up observer on unmount
     return () => {
       resizeObserver.disconnect();
     };
-  }, [dimensions, onResize]);
+  }, [onResize]);
 
-  // Clone children and pass dimensions as props if they're a valid React element
   const childrenWithProps = React.Children.map(children, (child) => {
     // Check if valid React element and not a DOM element (lowercase tag name)
     if (React.isValidElement(child)) {
@@ -57,7 +54,15 @@ const AutoResizeBox = ({ children, sx = {}, onResize }) => {
         child.type?.toString() === "Symbol(react.fragment)";
 
       if (isCustomComponent && !isFragment) {
-        return React.cloneElement(child, { containerDimensions: dimensions });
+        return React.cloneElement(child, {
+          containerDimensions: dimensions,
+          style: {
+            ...child.props.style,
+            width: "100%",
+            height: "100%",
+            minHeight: 300, // Ensure minimum height for charts
+          },
+        });
       }
     }
     return child;
@@ -70,6 +75,8 @@ const AutoResizeBox = ({ children, sx = {}, onResize }) => {
         height: "100%",
         width: "100%",
         overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
         ...sx,
       }}
     >

@@ -211,12 +211,21 @@ const InfractionsChart = ({ containerDimensions }) => {
     >
       {chartData ? (
         <>
-          <Box sx={{ height: "calc(100% - 35px)" }}>
+          <Box
+            sx={{
+              height: "calc(100% - 100px)", // Leave space for any stats or legends at bottom
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <Bar
               ref={chartRef}
               data={chartData}
-              options={options}
-              style={{ maxHeight: "100%" }}
+              options={{
+                ...options,
+                maintainAspectRatio: false,
+                responsive: true,
+              }}
             />
           </Box>
 

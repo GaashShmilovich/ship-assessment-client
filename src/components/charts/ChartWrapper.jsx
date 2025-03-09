@@ -80,7 +80,15 @@ const ChartWrapper = ({
   };
 
   return (
-    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+    <Box
+      sx={{
+        flexGrow: 1,
+        position: "relative",
+        border: error ? `1px solid ${theme.palette.error.light}` : "none",
+        borderRadius: 1,
+        height: "100%",
+      }}
+    >
       <Box
         sx={{
           display: "flex",

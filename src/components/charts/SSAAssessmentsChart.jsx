@@ -165,8 +165,7 @@ const SSAAssessmentsChart = ({ containerDimensions }) => {
         {chartData && (
           <Box
             sx={{
-              width: "100%",
-              height: "100%",
+              height: "calc(100%)", // Leave space for any stats or legends at bottom
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
@@ -175,8 +174,11 @@ const SSAAssessmentsChart = ({ containerDimensions }) => {
             <Pie
               ref={chartRef}
               data={chartData}
-              options={options}
-              style={{ maxHeight: "100%", maxWidth: "100%" }}
+              options={{
+                ...options,
+                maintainAspectRatio: false,
+                responsive: true,
+              }}
             />
           </Box>
         )}

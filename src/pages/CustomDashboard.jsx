@@ -67,43 +67,41 @@ const widgetConfig = {
   },
 };
 
-// Responsive layout configurations
 const getDefaultLayout = (width) => {
   const cols = width < 600 ? 1 : width < 960 ? 2 : 12;
 
-  // For mobile: Stack all widgets
+  // For mobile: Stack all widgets with fixed heights
   if (cols === 1) {
     return [
-      { i: "shipMap", x: 0, y: 0, w: 1, h: 10, minH: 6 },
-      { i: "shipInfo", x: 0, y: 10, w: 1, h: 6, minH: 5 },
-      { i: "ssa", x: 0, y: 16, w: 1, h: 6, minH: 5 },
-      { i: "infractions", x: 0, y: 22, w: 1, h: 6, minH: 5 },
-      { i: "cargo", x: 0, y: 28, w: 1, h: 6, minH: 5 },
+      { i: "shipMap", x: 0, y: 0, w: 1, h: 16, static: false }, // Map
+      { i: "shipInfo", x: 0, y: 16, w: 1, h: 14, static: false }, // Ship status
+      { i: "ssa", x: 0, y: 30, w: 1, h: 14, static: false }, // SSA pie chart
+      { i: "infractions", x: 0, y: 44, w: 1, h: 14, static: false }, // Infractions
+      { i: "cargo", x: 0, y: 58, w: 1, h: 14, static: false }, // Cargo
     ];
   }
 
   // For tablet: Two column layout
   if (cols === 2) {
     return [
-      { i: "shipMap", x: 0, y: 0, w: 2, h: 10, minH: 6 },
-      { i: "shipInfo", x: 0, y: 10, w: 1, h: 6, minH: 5 },
-      { i: "ssa", x: 1, y: 10, w: 1, h: 6, minH: 5 },
-      { i: "infractions", x: 0, y: 16, w: 1, h: 6, minH: 5 },
-      { i: "cargo", x: 1, y: 16, w: 1, h: 6, minH: 5 },
+      { i: "shipMap", x: 0, y: 0, w: 2, h: 16, static: false }, // Full width map
+      { i: "shipInfo", x: 0, y: 16, w: 1, h: 14, static: false }, // Left column
+      { i: "ssa", x: 1, y: 16, w: 1, h: 14, static: false }, // Right column
+      { i: "infractions", x: 0, y: 30, w: 1, h: 14, static: false }, // Left column
+      { i: "cargo", x: 1, y: 30, w: 1, h: 14, static: false }, // Right column
     ];
   }
 
   // Default (desktop) layout
   return [
-    { i: "shipMap", x: 0, y: 0, w: 12, h: 14, minH: 8 },
-    { i: "shipInfo", x: 0, y: 14, w: 6, h: 6, minH: 5 },
-    { i: "ssa", x: 6, y: 14, w: 6, h: 6, minH: 5 },
-    { i: "infractions", x: 0, y: 20, w: 6, h: 6, minH: 5 },
-    { i: "cargo", x: 6, y: 20, w: 6, h: 6, minH: 5 },
+    { i: "shipMap", x: 0, y: 0, w: 12, h: 16, static: false }, // Full width map
+    { i: "shipInfo", x: 0, y: 16, w: 6, h: 14, static: false }, // Left half
+    { i: "ssa", x: 6, y: 16, w: 6, h: 14, static: false }, // Right half
+    { i: "infractions", x: 0, y: 30, w: 6, h: 14, static: false }, // Left half
+    { i: "cargo", x: 6, y: 30, w: 6, h: 14, static: false }, // Right half
   ];
 };
 
-// Initially, all widgets are visible
 const initialWidgets = {
   shipMap: true,
   shipInfo: true,
@@ -115,16 +113,14 @@ const initialWidgets = {
 // Local storage key for saving dashboard state
 const DASHBOARD_STATE_KEY = "maritime_dashboard_state";
 
-// Simplified Widget component to replace DashboardWidget
 const SimpleWidget = ({ title, icon: IconComponent, children }) => {
   const theme = useTheme();
   const [isLoading, setIsLoading] = useState(true);
 
-  // Ensure DOM is ready before showing content
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 100);
+    }, 800);
     return () => clearTimeout(timer);
   }, []);
 
@@ -134,7 +130,7 @@ const SimpleWidget = ({ title, icon: IconComponent, children }) => {
       sx={{
         height: "100%",
         borderRadius: 2,
-        overflow: "hidden",
+        overflow: "hidden", // Changed back to hidden to prevent overflow
         display: "flex",
         flexDirection: "column",
         transition: "all 0.3s ease",
@@ -153,6 +149,10 @@ const SimpleWidget = ({ title, icon: IconComponent, children }) => {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          borderTopLeftRadius: theme.shape.borderRadius,
+          borderTopRightRadius: theme.shape.borderRadius,
+          flexShrink: 0,
+          zIndex: 10,
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -161,21 +161,14 @@ const SimpleWidget = ({ title, icon: IconComponent, children }) => {
             {title}
           </Typography>
         </Box>
-        {/* Fixed the tooltip with disabled button issue by wrapping in span */}
-        <Tooltip title="Fullscreen (disabled)">
-          <span>
-            <IconButton size="small" sx={{ color: "white" }} disabled>
-              <FullscreenIcon fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
+        {/* Remove resize button since resizing is disabled */}
       </Box>
 
       {/* Content */}
       <Box
         sx={{
           flexGrow: 1,
-          overflow: "auto",
+          overflow: "auto", // Allow scrolling if content is too large
           p: 2,
           position: "relative",
         }}
@@ -236,37 +229,47 @@ const CustomDashboard = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Toggle widget visibility
-  const handleToggleWidget = (widgetKey) => {
-    // Set visibility
-    setVisibleWidgets((prev) => ({
-      ...prev,
-      [widgetKey]: !prev[widgetKey],
-    }));
-
-    // If turning on, increment counter to force remount
-    if (!visibleWidgets[widgetKey]) {
-      setMountCounters((prev) => ({
+  const handleToggleWidget = useCallback(
+    (widgetKey) => {
+      setVisibleWidgets((prev) => ({
         ...prev,
-        [widgetKey]: prev[widgetKey] + 1,
+        [widgetKey]: !prev[widgetKey],
       }));
 
-      // Invalidate relevant queries
-      if (widgetKey === "shipMap" || widgetKey === "shipInfo") {
-        queryClient.invalidateQueries({ queryKey: ["ships"] });
-      }
-      if (widgetKey === "ssa") {
-        queryClient.invalidateQueries({ queryKey: ["assessments"] });
-      }
-      if (widgetKey === "infractions") {
-        queryClient.invalidateQueries({ queryKey: ["infractions"] });
-      }
-    }
+      if (!visibleWidgets[widgetKey]) {
+        setMountCounters((prev) => ({
+          ...prev,
+          [widgetKey]: prev[widgetKey] + 1,
+        }));
 
-    setHasUnsavedChanges(true);
-  };
+        setTimeout(() => {
+          switch (widgetKey) {
+            case "shipMap":
+            case "shipInfo":
+              queryClient.invalidateQueries({ queryKey: ["ships"] });
+              queryClient.refetchQueries({ queryKey: ["ships"] });
+              break;
+            case "ssa":
+              queryClient.invalidateQueries({ queryKey: ["assessments"] });
+              queryClient.refetchQueries({ queryKey: ["assessments"] });
+              break;
+            case "infractions":
+              queryClient.invalidateQueries({ queryKey: ["infractions"] });
+              queryClient.refetchQueries({ queryKey: ["infractions"] });
+              break;
+            case "cargo":
+              queryClient.invalidateQueries({ queryKey: ["ships"] });
+              queryClient.refetchQueries({ queryKey: ["ships"] });
+              break;
+          }
+        }, 100);
+      }
 
-  // Custom function to show snackbar messages
+      setHasUnsavedChanges(true);
+    },
+    [visibleWidgets, queryClient]
+  );
+
   const showSnackbar = (message, options = {}) => {
     setSnackbar({
       open: true,
@@ -598,13 +601,17 @@ const CustomDashboard = () => {
               className="layout"
               layout={filteredLayout}
               cols={isMobile ? 1 : isTablet ? 2 : 12}
-              rowHeight={30}
+              rowHeight={50}
               width={containerWidth}
               onLayoutChange={handleLayoutChange}
               draggableHandle=".drag-handle"
-              isResizable={!isMobile}
+              isResizable={false}
+              isDraggable={true}
               margin={[16, 16]}
               containerPadding={[0, 0]}
+              autoSize={true}
+              verticalCompact={true}
+              useCSSTransforms={true}
             >
               {/* Ship Map Widget */}
               {visibleWidgets.shipMap && (
