@@ -14,8 +14,6 @@ import {
   CircularProgress,
 } from "@mui/material";
 import ShipMap from "../components/ShipMap";
-import ShipInfoChart from "../components/charts/ShipInfoChart";
-import SSAAssessmentsChart from "../components/charts/SSAAssessmentsChart";
 import InfractionsChart from "../components/charts/InfractionsChart";
 import CargoCapacityChart from "../components/charts/CargoCapacityChart";
 import AutoResizeBox from "../components/AutoResizeBox";
@@ -41,22 +39,12 @@ import EventIcon from "@mui/icons-material/Event";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTheme, useMediaQuery } from "@mui/material";
 
-// Widget configuration
+// Widget configuration - REMOVED SSA and shipInfo
 const widgetConfig = {
   shipMap: {
     label: "Ship Map View",
     icon: DirectionsBoatIcon,
     description: "Interactive map showing all vessels in the port area",
-  },
-  shipInfo: {
-    label: "Ship Status",
-    icon: AssessmentIcon,
-    description: "Overview of ship statuses across the fleet",
-  },
-  ssa: {
-    label: "Security Assessments",
-    icon: WarningIcon,
-    description: "Distribution of ship security assessment types",
   },
   infractions: {
     label: "Infractions",
@@ -91,7 +79,7 @@ const widgetConfig = {
   },
 };
 
-// UPDATED LAYOUT: Map first, Document Expiry second, then 2 widgets per row (1 per column)
+// UPDATED LAYOUT: Removed SSA and ShipInfo charts
 const getDefaultLayout = (width) => {
   const cols = width < 600 ? 1 : width < 960 ? 2 : 12;
 
@@ -101,12 +89,10 @@ const getDefaultLayout = (width) => {
       { i: "shipMap", x: 0, y: 0, w: 1, h: 14, static: false },
       { i: "docExpiry", x: 0, y: 14, w: 1, h: 8, static: false },
       { i: "riskAlerts", x: 0, y: 22, w: 1, h: 8, static: false },
-      { i: "shipInfo", x: 0, y: 30, w: 1, h: 8, static: false },
-      { i: "securityMetrics", x: 0, y: 38, w: 1, h: 8, static: false },
-      { i: "timeline", x: 0, y: 46, w: 1, h: 8, static: false },
-      { i: "ssa", x: 0, y: 54, w: 1, h: 8, static: false },
-      { i: "infractions", x: 0, y: 62, w: 1, h: 8, static: false },
-      { i: "cargo", x: 0, y: 70, w: 1, h: 8, static: false },
+      { i: "securityMetrics", x: 0, y: 30, w: 1, h: 8, static: false },
+      { i: "timeline", x: 0, y: 38, w: 1, h: 8, static: false },
+      { i: "infractions", x: 0, y: 46, w: 1, h: 8, static: false },
+      { i: "cargo", x: 0, y: 54, w: 1, h: 8, static: false },
     ];
   }
 
@@ -116,12 +102,10 @@ const getDefaultLayout = (width) => {
       { i: "shipMap", x: 0, y: 0, w: 2, h: 14, static: false }, // Full width
       { i: "docExpiry", x: 0, y: 14, w: 2, h: 8, static: false }, // Full width
       { i: "riskAlerts", x: 0, y: 22, w: 1, h: 8, static: false }, // Left column
-      { i: "shipInfo", x: 1, y: 22, w: 1, h: 8, static: false }, // Right column
-      { i: "securityMetrics", x: 0, y: 30, w: 1, h: 8, static: false }, // Left column
-      { i: "timeline", x: 1, y: 30, w: 1, h: 8, static: false }, // Right column
-      { i: "ssa", x: 0, y: 38, w: 1, h: 8, static: false }, // Left column
-      { i: "infractions", x: 1, y: 38, w: 1, h: 8, static: false }, // Right column
-      { i: "cargo", x: 0, y: 46, w: 1, h: 8, static: false }, // Left column
+      { i: "securityMetrics", x: 1, y: 22, w: 1, h: 8, static: false }, // Right column
+      { i: "timeline", x: 0, y: 30, w: 1, h: 8, static: false }, // Left column
+      { i: "infractions", x: 1, y: 30, w: 1, h: 8, static: false }, // Right column
+      { i: "cargo", x: 0, y: 38, w: 1, h: 8, static: false }, // Left column
     ];
   }
 
@@ -130,19 +114,16 @@ const getDefaultLayout = (width) => {
     { i: "shipMap", x: 0, y: 0, w: 12, h: 10, static: false }, // Full width
     { i: "docExpiry", x: 0, y: 10, w: 12, h: 6, static: false }, // Full width
     { i: "riskAlerts", x: 0, y: 16, w: 6, h: 6, static: false }, // Left column
-    { i: "shipInfo", x: 6, y: 16, w: 6, h: 6, static: false }, // Right column
-    { i: "securityMetrics", x: 0, y: 22, w: 6, h: 6, static: false }, // Left column
-    { i: "timeline", x: 6, y: 22, w: 6, h: 6, static: false }, // Right column
-    { i: "ssa", x: 0, y: 28, w: 6, h: 6, static: false }, // Left column
-    { i: "infractions", x: 6, y: 28, w: 6, h: 6, static: false }, // Right column
-    { i: "cargo", x: 0, y: 34, w: 6, h: 6, static: false }, // Left column (last row)
+    { i: "securityMetrics", x: 6, y: 16, w: 6, h: 6, static: false }, // Right column
+    { i: "timeline", x: 0, y: 22, w: 6, h: 6, static: false }, // Left column
+    { i: "infractions", x: 6, y: 22, w: 6, h: 6, static: false }, // Right column
+    { i: "cargo", x: 0, y: 28, w: 6, h: 6, static: false }, // Left column
   ];
 };
 
+// Updated initial widgets - removed SSA and shipInfo
 const initialWidgets = {
   shipMap: true,
-  shipInfo: true,
-  ssa: true,
   infractions: true,
   cargo: true,
   riskAlerts: true,
@@ -161,7 +142,8 @@ const SimpleWidget = ({ title, icon: IconComponent, children }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 800);
+    }, 800); // Short timeout to ensure component is fully mounted
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -254,8 +236,6 @@ const CustomDashboard = () => {
   // Each widget has its own mounting counter
   const [mountCounters, setMountCounters] = useState({
     shipMap: 1,
-    shipInfo: 1,
-    ssa: 1,
     infractions: 1,
     cargo: 1,
     riskAlerts: 1,
@@ -342,20 +322,15 @@ const CustomDashboard = () => {
           });
         }
 
-        // Refresh the relevant queries
+        // Refresh the relevant queries with a delay
         setTimeout(() => {
           switch (widgetKey) {
             case "shipMap":
-            case "shipInfo":
             case "cargo":
             case "riskAlerts":
             case "securityMetrics":
               queryClient.invalidateQueries({ queryKey: ["ships"] });
               queryClient.refetchQueries({ queryKey: ["ships"] });
-              break;
-            case "ssa":
-              queryClient.invalidateQueries({ queryKey: ["assessments"] });
-              queryClient.refetchQueries({ queryKey: ["assessments"] });
               break;
             case "infractions":
               queryClient.invalidateQueries({ queryKey: ["infractions"] });
@@ -365,16 +340,14 @@ const CustomDashboard = () => {
             case "timeline":
               // These widgets need multiple data sources
               queryClient.invalidateQueries({ queryKey: ["ships"] });
-              queryClient.invalidateQueries({ queryKey: ["assessments"] });
               queryClient.invalidateQueries({ queryKey: ["infractions"] });
               queryClient.refetchQueries({ queryKey: ["ships"] });
-              queryClient.refetchQueries({ queryKey: ["assessments"] });
               queryClient.refetchQueries({ queryKey: ["infractions"] });
               break;
             default:
               break;
           }
-        }, 100);
+        }, 200);
       }
 
       setHasUnsavedChanges(true);
@@ -532,6 +505,7 @@ const CustomDashboard = () => {
       return item;
     })
     .filter((item) => visibleWidgets[item.i]);
+
   // Handle layout change
   const handleLayoutChange = (newLayout) => {
     setLayout(newLayout);
@@ -770,31 +744,6 @@ const CustomDashboard = () => {
                 </div>
               )}
 
-              {/* Ship Info Widget - FIXED */}
-              {visibleWidgets.shipInfo && (
-                <div key="shipInfo" style={{ width: "100%", height: "100%" }}>
-                  <SimpleWidget
-                    title={widgetConfig.shipInfo.label}
-                    icon={widgetConfig.shipInfo.icon}
-                  >
-                    <div
-                      key={`shipInfo-content-${mountCounters.shipInfo}`}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        display: "flex",
-                        flexDirection: "column",
-                        flex: 1,
-                      }}
-                    >
-                      <AutoResizeBox sx={{ flex: 1, minHeight: 0 }}>
-                        <ShipInfoChart />
-                      </AutoResizeBox>
-                    </div>
-                  </SimpleWidget>
-                </div>
-              )}
-
               {/* Security Metrics Widget - FIXED */}
               {visibleWidgets.securityMetrics && (
                 <div
@@ -842,31 +791,6 @@ const CustomDashboard = () => {
                     >
                       <AutoResizeBox sx={{ flex: 1, minHeight: 0 }}>
                         <PortActivityTimeline />
-                      </AutoResizeBox>
-                    </div>
-                  </SimpleWidget>
-                </div>
-              )}
-
-              {/* SSA Widget - FIXED */}
-              {visibleWidgets.ssa && (
-                <div key="ssa" style={{ width: "100%", height: "100%" }}>
-                  <SimpleWidget
-                    title={widgetConfig.ssa.label}
-                    icon={widgetConfig.ssa.icon}
-                  >
-                    <div
-                      key={`ssa-content-${mountCounters.ssa}`}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        display: "flex",
-                        flexDirection: "column",
-                        flex: 1,
-                      }}
-                    >
-                      <AutoResizeBox sx={{ flex: 1, minHeight: 0 }}>
-                        <SSAAssessmentsChart />
                       </AutoResizeBox>
                     </div>
                   </SimpleWidget>

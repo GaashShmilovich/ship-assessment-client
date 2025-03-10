@@ -34,13 +34,16 @@ const DocumentExpiryTracker = () => {
 
   // Calculate days until expiry and categorize documents
   const documentData = useMemo(() => {
-    if (!ships.length) return [];
+    // Ensure ships is an array
+    const shipsArray = Array.isArray(ships) ? ships : [];
+
+    if (!shipsArray.length) return [];
 
     const currentDate = new Date();
     const documents = [];
 
-    // Mock document data - in a real app, this would come from your backend
-    ships.forEach((ship) => {
+    // Safely iterate through ships
+    shipsArray.forEach((ship) => {
       // Create a mock SSA expiry date (1 year after SSA date)
       if (ship.dateOfSsa) {
         const ssaDate = new Date(ship.dateOfSsa);

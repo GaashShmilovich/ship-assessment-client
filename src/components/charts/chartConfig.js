@@ -1,4 +1,4 @@
-// src/components/charts/chartConfig.js
+// src/components/charts/chartConfig.js - Enhanced with better DOM safety
 import { useTheme } from "@mui/material"
 
 // Custom chart color palette with enhanced colors
@@ -49,7 +49,7 @@ export const statusColors = {
     UNKNOWN: { main: "neutral", index: 0 },
 }
 
-// Improved chart animation config with better responsiveness
+// Improved chart animation config with better responsiveness and safety
 export const animationOptions = {
     responsive: true,
     maintainAspectRatio: false, // Critical for proper resizing
@@ -57,6 +57,8 @@ export const animationOptions = {
         duration: 800,
         easing: "easeOutQuart",
     },
+    // Add a resize delay to debounce resize operations - important for preventing ownerDocument errors
+    resizeDelay: 200,
     transitions: {
         active: {
             animation: {
@@ -110,20 +112,31 @@ export const animationOptions = {
             bottom: 10,
             left: 8
         }
-    },
-    // Better responsive behavior
-    resizeDelay: 100, // Debounce resize events
+    }
 }
 
-// Generate responsive options based on container dimensions
+// Generate responsive options based on container dimensions with improved safety
 export const getResponsiveOptions = (dimensions, baseOptions = {}) => {
-    const { width = 0, height = 0 } = dimensions || {}
+    // Safety check for dimensions
+    if (!dimensions || typeof dimensions !== 'object') {
+        return baseOptions
+    }
+
+    const { width = 0, height = 0 } = dimensions
+
+    // Additional safety check for valid dimensions
+    if (width <= 0 || height <= 0) {
+        return baseOptions
+    }
+
     const isSmall = width < 300 || height < 200
     const isMedium = (width >= 300 && width < 500) || (height >= 200 && height < 300)
 
     // Dynamically adjust options based on container size
     const responsiveOptions = {
         ...baseOptions,
+        // Add a resize delay to improve rendering stability
+        resizeDelay: isSmall ? 200 : 100,
         plugins: {
             ...baseOptions.plugins,
             legend: {
@@ -214,17 +227,25 @@ export const useChartColors = () => {
     return { getStatusColor, getChartColorSet }
 }
 
-// Generate a canvas to export chart as image with enhanced quality
+// Generate a canvas to export chart as image with enhanced quality and safety checks
 export const exportChartToImage = (chartRef, fileName = "chart.png") => {
-    if (!chartRef || !chartRef.current) return
+    // Safety check for chart reference
+    if (!chartRef || !chartRef.current) {
+        console.warn('Chart export failed - chart reference is not available')
+        return
+    }
 
     try {
         // Check if the chart has toBase64Image method (Chart.js 3.x+)
         if (typeof chartRef.current.toBase64Image === 'function') {
+            // Create link element for download
             const link = document.createElement("a")
             link.download = fileName
-            // Use better quality settings
+
+            // Get chart as base64 image with maximum quality
             link.href = chartRef.current.toBase64Image('image/png', 1.0)
+
+            // Trigger download
             link.click()
         } else {
             console.warn('Chart export is not available - chart instance missing toBase64Image method')
@@ -234,23 +255,71 @@ export const exportChartToImage = (chartRef, fileName = "chart.png") => {
     }
 }
 
-// Function to create gradient backgrounds for charts
+// Function to create gradient backgrounds for charts with safety checks
 export const createGradientBackground = (ctx, colors) => {
-    if (!ctx) return colors
+    // Safety check for canvas context
+    if (!ctx || !ctx.createLinearGradient) {
+        console.warn('Cannot create gradient background - invalid canvas context')
+        return colors
+    }
 
-    return colors.map(color => {
-        const gradient = ctx.createLinearGradient(0, 0, 0, 400)
-        // Extract rgba values
-        const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([0-9.]+))?\)/)
+    try {
+        return colors.map(color => {
+            // Extract rgba values with safety check
+            const rgbaMatch = typeof color === 'string' ?
+                color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([0-9.]+))?\)/) :
+                null
 
-        if (!rgbaMatch) return color
+            if (!rgbaMatch) return color
 
-        const [, r, g, b, a = "1"] = rgbaMatch
+            const [, r, g, b, a = "1"] = rgbaMatch
 
-        // Create gradient with transparency
-        gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${a})`)
-        gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.1)`)
+            // Create gradient with transparency
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400)
+            gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${a})`)
+            gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.1)`)
 
-        return gradient
-    })
+            return gradient
+        })
+    } catch (error) {
+        console.error('Error creating gradient background:', error)
+        return colors
+    }
+}
+
+// New function to safely initialize charts with DOM checks
+export const safelyInitializeChart = (chartRef, setChartInstance) => {
+    // Check if the chart ref exists
+    if (!chartRef || !chartRef.current) {
+        return null
+    }
+
+    try {
+        // Get chart instance if it exists
+        const chartInstance = chartRef.current.chartInstance || chartRef.current
+
+        if (chartInstance && typeof setChartInstance === 'function') {
+            // Store chart instance in state
+            setChartInstance(chartInstance)
+        }
+
+        return chartInstance
+    } catch (error) {
+        console.error('Error initializing chart:', error)
+        return null
+    }
+}
+
+// New function to safely destroy charts
+export const safelyDestroyChart = (chartInstance) => {
+    if (!chartInstance) return
+
+    try {
+        // Check if destroy method exists before calling it
+        if (typeof chartInstance.destroy === 'function') {
+            chartInstance.destroy()
+        }
+    } catch (error) {
+        console.error('Error destroying chart:', error)
+    }
 }

@@ -223,22 +223,40 @@ const ShipMap = () => {
 
   const ships = useMemo(() => {
     if (!shipsData) return [];
-    if (Array.isArray(shipsData)) return shipsData;
-    // If data is not in expected format, check if it has a nested array property
+
+    // Check if shipsData is an array
+    if (Array.isArray(shipsData)) {
+      return shipsData;
+    }
+
+    // If it's an object, try to find an array property
     if (shipsData && typeof shipsData === "object") {
       // Look for possible array properties
       for (const key in shipsData) {
         if (Array.isArray(shipsData[key])) {
-          console.warn("Ships data was nested, using shipsData." + key);
+          console.warn(`Ships data was nested in property '${key}'`);
           return shipsData[key];
         }
       }
+
+      // If no array properties found but we have something, return an empty array
+      console.error(
+        "Expected ships to be an array but got:",
+        typeof shipsData,
+        shipsData
+      );
+      return [];
     }
-    console.error(
-      "Expected ships to be an array but got:",
-      typeof shipsData,
-      shipsData
-    );
+
+    // If data is a string (like HTML), log an error and return empty array
+    if (typeof shipsData === "string") {
+      console.error(
+        "Received string instead of ships data array. First 100 chars:",
+        shipsData.substring(0, 100)
+      );
+      return [];
+    }
+
     return [];
   }, [shipsData]);
 

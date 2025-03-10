@@ -44,20 +44,18 @@ const ChartWrapper = ({
   const [hasRendered, setHasRendered] = useState(false);
   const [showRetryBackdrop, setShowRetryBackdrop] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-
-  // NEW: State to control when charts are actually rendered
   const [canRenderCharts, setCanRenderCharts] = useState(false);
 
   // Set mounted status with improved cleanup
   useEffect(() => {
     setIsMounted(true);
 
-    // NEW: Delay chart rendering to prevent ownerDocument errors
+    // Delay chart rendering to prevent ownerDocument errors
     const renderTimer = setTimeout(() => {
       if (wrapperRef.current) {
         setCanRenderCharts(true);
       }
-    }, 250); // Increased delay to ensure DOM is fully ready
+    }, 300); // Increased delay to ensure DOM is fully ready
 
     return () => {
       setIsMounted(false);
@@ -82,7 +80,7 @@ const ChartWrapper = ({
   // Handle container dimension updates - now with safety checks
   useEffect(() => {
     if (containerDimensions && isMounted) {
-      // NEW: Only update dimensions if they're actually valid numbers
+      // Only update dimensions if they're actually valid numbers
       if (
         typeof containerDimensions.width === "number" &&
         typeof containerDimensions.height === "number" &&
@@ -97,7 +95,7 @@ const ChartWrapper = ({
   // Handle resize from parent with improved safety
   const handleResize = (newDimensions) => {
     if (isMounted && newDimensions) {
-      // NEW: Validate dimensions before updating state
+      // Validate dimensions before updating state
       if (
         typeof newDimensions.width === "number" &&
         typeof newDimensions.height === "number" &&
@@ -125,7 +123,7 @@ const ChartWrapper = ({
     });
   };
 
-  // NEW: Safety wrapper for chart components
+  // Safety wrapper for chart components
   const renderSafeChildren = () => {
     // Don't render children until we're ready
     if (!canRenderCharts) {
@@ -162,7 +160,7 @@ const ChartWrapper = ({
           return React.cloneElement(child, {
             containerDimensions: dimensions,
             parentHeight: height,
-            isMounted: isMounted && canRenderCharts, // NEW: Only pass true when fully ready
+            isMounted: isMounted && canRenderCharts, // Only pass true when fully ready
             style: {
               ...child.props.style,
               width: "100%",
@@ -189,76 +187,78 @@ const ChartWrapper = ({
         minHeight: "300px",
       }}
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          mb: 1,
-        }}
-      >
-        <Box>
-          <Typography variant="h6" gutterBottom={!!description}>
-            {title}
-          </Typography>
-          {description && (
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mt: -1, mb: 1 }}
-            >
-              {description}
+      {title && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 1,
+          }}
+        >
+          <Box>
+            <Typography variant="h6" gutterBottom={!!description}>
+              {title}
             </Typography>
-          )}
+            {description && (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: -1, mb: 1 }}
+              >
+                {description}
+              </Typography>
+            )}
+          </Box>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            {exportChart && (
+              <Tooltip title="Export chart as image">
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={exportChart}
+                    disabled={isLoading || !!error || !hasRendered}
+                    color="primary"
+                  >
+                    <DownloadIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
+            {onRefetch && (
+              <Tooltip title="Refresh data">
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={handleRetryWithFeedback}
+                    disabled={isLoading}
+                    color="primary"
+                  >
+                    <RefreshIcon
+                      fontSize="small"
+                      className={isLoading ? "animate-spin" : ""}
+                    />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
+            {showFullscreenButton && onFullscreen && (
+              <Tooltip title="View fullscreen">
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={onFullscreen}
+                    disabled={isLoading || !!error}
+                    color="primary"
+                  >
+                    <ZoomInIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
+          </Box>
         </Box>
-        <Box sx={{ display: "flex", gap: 1 }}>
-          {exportChart && (
-            <Tooltip title="Export chart as image">
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={exportChart}
-                  disabled={isLoading || !!error || !hasRendered}
-                  color="primary"
-                >
-                  <DownloadIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-          )}
-          {onRefetch && (
-            <Tooltip title="Refresh data">
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={handleRetryWithFeedback}
-                  disabled={isLoading}
-                  color="primary"
-                >
-                  <RefreshIcon
-                    fontSize="small"
-                    className={isLoading ? "animate-spin" : ""}
-                  />
-                </IconButton>
-              </span>
-            </Tooltip>
-          )}
-          {showFullscreenButton && onFullscreen && (
-            <Tooltip title="View fullscreen">
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={onFullscreen}
-                  disabled={isLoading || !!error}
-                  color="primary"
-                >
-                  <ZoomInIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-          )}
-        </Box>
-      </Box>
+      )}
 
       {/* Increased minimum height to ensure visibility */}
       <Box
@@ -334,13 +334,13 @@ const ChartWrapper = ({
             sx={{
               height: "100%",
               width: "100%",
-              // NEW: Ensure this element has dimensions before charts render
+              // Ensure this element has dimensions before charts render
               minHeight: height,
               position: "relative",
             }}
           >
             <AutoResizeBox onResize={handleResize}>
-              {/* NEW: Use the safety wrapper function instead of direct rendering */}
+              {/* Use the safety wrapper function instead of direct rendering */}
               {renderSafeChildren()}
             </AutoResizeBox>
           </Box>
