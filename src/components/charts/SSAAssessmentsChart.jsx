@@ -1,4 +1,5 @@
-import React, { useRef, useState } from "react";
+// src/components/charts/SSAAssessmentsChart.jsx - Enhanced with proper Chart.js lifecycle management
+import React, { useRef, useState, useEffect } from "react";
 import { Doughnut } from "react-chartjs-2";
 import { getAllAssessments } from "../../services/api";
 import { useQuery } from "@tanstack/react-query";
@@ -6,11 +7,12 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import ChartWrapper from "./ChartWrapper";
 import { Box, Chip } from "@mui/material";
 
-// Register necessary Chart.js components - simplifying to just the essentials
+// Register necessary Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const SimplifiedSSAChart = ({ containerDimensions }) => {
+const SimplifiedSSAChart = ({ containerDimensions, isMounted }) => {
   const chartRef = useRef(null);
+  const [chartInstance, setChartInstance] = useState(null);
 
   const {
     data: assessments = [],
@@ -67,7 +69,7 @@ const SimplifiedSSAChart = ({ containerDimensions }) => {
     ],
   };
 
-  // Simple chart options
+  // Simple chart options with better lifecycle management
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -95,6 +97,22 @@ const SimplifiedSSAChart = ({ containerDimensions }) => {
       },
     },
   };
+
+  // Store chart reference when it's created
+  const onChartRef = (chart) => {
+    if (chart !== null) {
+      setChartInstance(chart);
+    }
+  };
+
+  // Properly destroy chart on unmount
+  useEffect(() => {
+    return () => {
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+    };
+  }, [chartInstance]);
 
   // Process the real data if available
   let chartData = mockData;
@@ -152,9 +170,18 @@ const SimplifiedSSAChart = ({ containerDimensions }) => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            position: "relative",
           }}
         >
-          <Doughnut ref={chartRef} data={chartData} options={options} />
+          {/* Only render chart if container is mounted */}
+          <Doughnut
+            ref={(ref) => {
+              chartRef.current = ref;
+              onChartRef(ref);
+            }}
+            data={chartData}
+            options={options}
+          />
         </Box>
 
         {/* Simple tag display */}

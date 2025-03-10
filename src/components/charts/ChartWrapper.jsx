@@ -1,5 +1,5 @@
-// src/components/charts/ChartWrapper.jsx
-import React, { useState, useEffect } from "react";
+// src/components/charts/ChartWrapper.jsx - Enhanced version with Chart.js error fixes
+import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
   Typography,
@@ -23,6 +23,7 @@ import AutoResizeBox from "../AutoResizeBox";
 /**
  * An enhanced wrapper for all chart components
  * Handles loading, error states, resizing, and provides export functionality
+ * Now with safer mounting/unmounting logic
  */
 const ChartWrapper = ({
   title,
@@ -38,49 +39,146 @@ const ChartWrapper = ({
   onFullscreen = null,
 }) => {
   const theme = useTheme();
+  const wrapperRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [hasRendered, setHasRendered] = useState(false);
   const [showRetryBackdrop, setShowRetryBackdrop] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // NEW: State to control when charts are actually rendered
+  const [canRenderCharts, setCanRenderCharts] = useState(false);
+
+  // Set mounted status with improved cleanup
+  useEffect(() => {
+    setIsMounted(true);
+
+    // NEW: Delay chart rendering to prevent ownerDocument errors
+    const renderTimer = setTimeout(() => {
+      if (wrapperRef.current) {
+        setCanRenderCharts(true);
+      }
+    }, 250); // Increased delay to ensure DOM is fully ready
+
+    return () => {
+      setIsMounted(false);
+      clearTimeout(renderTimer);
+      setCanRenderCharts(false);
+    };
+  }, []);
 
   // Track if component has rendered successfully
   useEffect(() => {
-    if (!isLoading && !error) {
+    if (!isLoading && !error && isMounted && canRenderCharts) {
       // Only set hasRendered to true after a short delay to ensure chart has time to render
       const timer = setTimeout(() => {
-        setHasRendered(true);
+        if (isMounted) {
+          setHasRendered(true);
+        }
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [isLoading, error]);
+  }, [isLoading, error, isMounted, canRenderCharts]);
 
-  // Handle container dimension updates
+  // Handle container dimension updates - now with safety checks
   useEffect(() => {
-    if (containerDimensions) {
-      setDimensions(containerDimensions);
+    if (containerDimensions && isMounted) {
+      // NEW: Only update dimensions if they're actually valid numbers
+      if (
+        typeof containerDimensions.width === "number" &&
+        typeof containerDimensions.height === "number" &&
+        containerDimensions.width > 0 &&
+        containerDimensions.height > 0
+      ) {
+        setDimensions(containerDimensions);
+      }
     }
-  }, [containerDimensions]);
+  }, [containerDimensions, isMounted]);
 
-  // Handle resize from parent
+  // Handle resize from parent with improved safety
   const handleResize = (newDimensions) => {
-    setDimensions(newDimensions);
+    if (isMounted && newDimensions) {
+      // NEW: Validate dimensions before updating state
+      if (
+        typeof newDimensions.width === "number" &&
+        typeof newDimensions.height === "number" &&
+        newDimensions.width > 0 &&
+        newDimensions.height > 0
+      ) {
+        setDimensions(newDimensions);
+      }
+    }
   };
 
   // Handle retry with backdrop
   const handleRetryWithFeedback = () => {
-    if (!onRefetch) return;
+    if (!onRefetch || !isMounted) return;
 
     setShowRetryBackdrop(true);
     // Call refetch
     Promise.resolve(onRefetch()).finally(() => {
       // Hide backdrop after a minimum delay to show the loading state
-      setTimeout(() => {
-        setShowRetryBackdrop(false);
-      }, 800);
+      if (isMounted) {
+        setTimeout(() => {
+          setShowRetryBackdrop(false);
+        }, 800);
+      }
+    });
+  };
+
+  // NEW: Safety wrapper for chart components
+  const renderSafeChildren = () => {
+    // Don't render children until we're ready
+    if (!canRenderCharts) {
+      return (
+        <Box
+          sx={{
+            height: "100%",
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {/* Invisible placeholder while waiting for DOM to be ready */}
+        </Box>
+      );
+    }
+
+    return React.Children.map(children, (child) => {
+      if (React.isValidElement(child)) {
+        // Only pass props to custom components (uppercase first letter)
+        const componentName =
+          child.type?.displayName ||
+          child.type?.name ||
+          (typeof child.type === "string" ? child.type : "");
+        const isCustomComponent = componentName && /^[A-Z]/.test(componentName);
+
+        // Don't pass props to Fragment
+        const isFragment =
+          child.type === React.Fragment ||
+          child.type?.toString() === "Symbol(react.fragment)";
+
+        if (isCustomComponent && !isFragment) {
+          return React.cloneElement(child, {
+            containerDimensions: dimensions,
+            parentHeight: height,
+            isMounted: isMounted && canRenderCharts, // NEW: Only pass true when fully ready
+            style: {
+              ...child.props.style,
+              width: "100%",
+              height: "100%",
+              minHeight: 250, // Ensure minimum height for charts
+            },
+          });
+        }
+      }
+      return child;
     });
   };
 
   return (
     <Box
+      ref={wrapperRef}
       sx={{
         flexGrow: 1,
         position: "relative",
@@ -231,39 +329,21 @@ const ChartWrapper = ({
             </Box>
           </Fade>
         ) : (
-          <AutoResizeBox onResize={handleResize}>
-            {/* Clone children and pass dimensions */}
-            {React.Children.map(children, (child) => {
-              if (React.isValidElement(child)) {
-                // Only pass props to custom components (uppercase first letter)
-                const componentName =
-                  child.type?.displayName ||
-                  child.type?.name ||
-                  (typeof child.type === "string" ? child.type : "");
-                const isCustomComponent =
-                  componentName && /^[A-Z]/.test(componentName);
-
-                // Don't pass props to Fragment
-                const isFragment =
-                  child.type === React.Fragment ||
-                  child.type?.toString() === "Symbol(react.fragment)";
-
-                if (isCustomComponent && !isFragment) {
-                  return React.cloneElement(child, {
-                    containerDimensions: dimensions,
-                    parentHeight: height,
-                    style: {
-                      ...child.props.style,
-                      width: "100%",
-                      height: "100%",
-                      minHeight: 250, // Ensure minimum height for charts
-                    },
-                  });
-                }
-              }
-              return child;
-            })}
-          </AutoResizeBox>
+          <Box
+            className="chart-container"
+            sx={{
+              height: "100%",
+              width: "100%",
+              // NEW: Ensure this element has dimensions before charts render
+              minHeight: height,
+              position: "relative",
+            }}
+          >
+            <AutoResizeBox onResize={handleResize}>
+              {/* NEW: Use the safety wrapper function instead of direct rendering */}
+              {renderSafeChildren()}
+            </AutoResizeBox>
+          </Box>
         )}
       </Box>
 
