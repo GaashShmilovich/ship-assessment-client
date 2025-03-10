@@ -194,10 +194,8 @@ const ShipMap = () => {
   const mapRef = useRef(null);
   const navigate = useNavigate();
 
-  // Create a ref to track the previous overflow style
   const prevOverflowRef = useRef("");
 
-  // Calculate map center from water areas
   const mapCenter = useMemo(
     () => [
       waterAreas.reduce(
@@ -215,7 +213,7 @@ const ShipMap = () => {
   const zoomLevel = 13;
 
   const {
-    data: ships = [],
+    data: shipsData,
     isLoading,
     error,
   } = useQuery({
@@ -223,7 +221,27 @@ const ShipMap = () => {
     queryFn: () => getAllShips().then((res) => res.data),
   });
 
-  // Count ships by status
+  const ships = useMemo(() => {
+    if (!shipsData) return [];
+    if (Array.isArray(shipsData)) return shipsData;
+    // If data is not in expected format, check if it has a nested array property
+    if (shipsData && typeof shipsData === "object") {
+      // Look for possible array properties
+      for (const key in shipsData) {
+        if (Array.isArray(shipsData[key])) {
+          console.warn("Ships data was nested, using shipsData." + key);
+          return shipsData[key];
+        }
+      }
+    }
+    console.error(
+      "Expected ships to be an array but got:",
+      typeof shipsData,
+      shipsData
+    );
+    return [];
+  }, [shipsData]);
+
   const statusCounts = useMemo(() => {
     return ships.reduce((acc, ship) => {
       const status = ship.shipStatus || "UNKNOWN";
