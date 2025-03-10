@@ -82,42 +82,80 @@ const widgetConfig = {
 // UPDATED LAYOUT: Removed SSA and ShipInfo charts
 const getDefaultLayout = (width) => {
   const cols = width < 600 ? 1 : width < 960 ? 2 : 12;
+  const totalCols = 10; // Standard grid system
+  const widgetWidth = 5; // Width for side-by-side widgets
+  const centerOffset = (totalCols - 2 * widgetWidth) / 2; // Will now be an integer
 
   // For mobile: Stack all widgets
   if (cols === 1) {
     return [
       { i: "shipMap", x: 0, y: 0, w: 1, h: 14, static: false },
-      { i: "docExpiry", x: 0, y: 14, w: 1, h: 8, static: false },
-      { i: "riskAlerts", x: 0, y: 22, w: 1, h: 8, static: false },
-      { i: "securityMetrics", x: 0, y: 30, w: 1, h: 8, static: false },
-      { i: "timeline", x: 0, y: 38, w: 1, h: 8, static: false },
-      { i: "infractions", x: 0, y: 46, w: 1, h: 8, static: false },
-      { i: "cargo", x: 0, y: 54, w: 1, h: 8, static: false },
+      { i: "docExpiry", x: 0, y: 14, w: 1, h: 6, static: false },
+      { i: "riskAlerts", x: 0, y: 20, w: 1, h: 6, static: false },
+      { i: "securityMetrics", x: 0, y: 26, w: 1, h: 6, static: false },
+      { i: "timeline", x: 0, y: 32, w: 1, h: 6, static: false },
+      { i: "infractions", x: 0, y: 38, w: 1, h: 6, static: false },
+      { i: "cargo", x: 0, y: 44, w: 1, h: 5, static: false },
     ];
   }
 
   // For tablet: Two column layout
   if (cols === 2) {
     return [
-      { i: "shipMap", x: 0, y: 0, w: 2, h: 14, static: false }, // Full width
-      { i: "docExpiry", x: 0, y: 14, w: 2, h: 8, static: false }, // Full width
-      { i: "riskAlerts", x: 0, y: 22, w: 1, h: 8, static: false }, // Left column
-      { i: "securityMetrics", x: 1, y: 22, w: 1, h: 8, static: false }, // Right column
-      { i: "timeline", x: 0, y: 30, w: 1, h: 8, static: false }, // Left column
-      { i: "infractions", x: 1, y: 30, w: 1, h: 8, static: false }, // Right column
-      { i: "cargo", x: 0, y: 38, w: 1, h: 8, static: false }, // Left column
+      { i: "shipMap", x: 0, y: 0, w: 2, h: 14, static: false },
+      { i: "docExpiry", x: 0, y: 14, w: 2, h: 6, static: false },
+      { i: "riskAlerts", x: 0, y: 20, w: 1, h: 6, static: false },
+      { i: "securityMetrics", x: 1, y: 20, w: 1, h: 6, static: false },
+      { i: "timeline", x: 0, y: 26, w: 1, h: 6, static: false },
+      { i: "infractions", x: 1, y: 26, w: 1, h: 6, static: false },
+      { i: "cargo", x: 0, y: 32, w: 1, h: 5, static: false },
     ];
   }
 
-  // Default (desktop) layout - Map first, DocExpiry second, then 2 per row
+  // Desktop layout with centered widgets
   return [
-    { i: "shipMap", x: 0, y: 0, w: 11, h: 10, static: false }, // Full width
-    { i: "docExpiry", x: 0, y: 10, w: 11, h: 6, static: false }, // Full width
-    { i: "riskAlerts", x: 0, y: 16, w: 5.5, h: 6, static: false }, // Left column
-    { i: "securityMetrics", x: 5.5, y: 16, w: 5.5, h: 6, static: false }, // Right column
-    { i: "timeline", x: 0, y: 22, w: 5.5, h: 6, static: false }, // Left column
-    { i: "infractions", x: 5.5, y: 22, w: 5.5, h: 6, static: false }, // Right column
-    { i: "cargo", x: 0, y: 28, w: 5.5, h: 5, static: false }, // Left column
+    { i: "shipMap", x: 0, y: 0, w: 10, h: 10, static: false },
+    { i: "docExpiry", x: 0, y: 10, w: 10, h: 6, static: false },
+    {
+      i: "riskAlerts",
+      x: centerOffset,
+      y: 16,
+      w: widgetWidth,
+      h: 6,
+      static: false,
+    },
+    {
+      i: "securityMetrics",
+      x: centerOffset + widgetWidth,
+      y: 16,
+      w: widgetWidth,
+      h: 6,
+      static: false,
+    },
+    {
+      i: "timeline",
+      x: centerOffset,
+      y: 22,
+      w: widgetWidth,
+      h: 6,
+      static: false,
+    },
+    {
+      i: "infractions",
+      x: centerOffset + widgetWidth,
+      y: 22,
+      w: widgetWidth,
+      h: 6,
+      static: false,
+    },
+    {
+      i: "cargo",
+      x: centerOffset,
+      y: 28,
+      w: widgetWidth,
+      h: 5,
+      static: false,
+    },
   ];
 };
 
@@ -158,6 +196,7 @@ const SimpleWidget = ({ title, icon: IconComponent, children }) => {
         transition: "all 0.3s ease",
         "&:hover": { boxShadow: 4 },
         overflow: "hidden",
+        width: "100%",
       }}
     >
       {/* Header */}
@@ -658,7 +697,7 @@ const CustomDashboard = () => {
             <GridLayout
               className="layout"
               layout={filteredLayout}
-              cols={isMobile ? 1 : isTablet ? 2 : 12}
+              cols={isMobile ? 1 : isTablet ? 2 : 11} // Change 11 to 12 here
               rowHeight={70}
               width={containerWidth}
               onLayoutChange={handleLayoutChange}

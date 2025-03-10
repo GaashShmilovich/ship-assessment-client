@@ -68,19 +68,6 @@ const Footer = () => {
             </Typography>
           </Box>
         </Box>
-
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          align="center"
-          sx={{
-            display: "block",
-            mt: 2,
-            textAlign: "center",
-          }}
-        >
-          Demo Application - Not for production use
-        </Typography>
       </Container>
     </Box>
   );
