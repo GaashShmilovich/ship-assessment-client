@@ -1,3 +1,6 @@
+// src/components/AutoResizeBox.jsx
+// Enhanced with better resize handling and overflow control
+
 import React, { useRef, useEffect, useState } from "react";
 import { Box } from "@mui/material";
 
@@ -5,36 +8,52 @@ const AutoResizeBox = ({ children, sx = {}, onResize }) => {
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [isInitialized, setIsInitialized] = useState(false);
+  const rafRef = useRef(null);
 
-  // Set up the ResizeObserver
+  // Set up the ResizeObserver with throttling
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Create new ResizeObserver
-    const resizeObserver = new ResizeObserver((entries) => {
-      if (!entries || !entries[0]) return;
+    // Helper function with throttling to prevent too many updates
+    const updateDimensions = (entries) => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
 
-      const { width, height } = entries[0].contentRect;
+      rafRef.current = requestAnimationFrame(() => {
+        if (!entries || !entries[0]) return;
 
-      // Only update if dimensions actually changed
-      if (width !== dimensions.width || height !== dimensions.height) {
-        setDimensions({ width, height });
+        const { width, height } = entries[0].contentRect;
 
-        // Call onResize prop if provided
-        if (onResize) {
-          onResize({ width, height });
+        // Only update if dimensions actually changed and are valid
+        if (
+          (width !== dimensions.width || height !== dimensions.height) &&
+          width > 0 &&
+          height > 0
+        ) {
+          setDimensions({ width, height });
+
+          // Call onResize prop if provided
+          if (onResize) {
+            onResize({ width, height });
+          }
         }
-      }
 
-      // Mark as initialized after first measurement
-      if (!isInitialized) {
-        setIsInitialized(true);
-      }
-    });
+        // Mark as initialized after first measurement
+        if (!isInitialized) {
+          setIsInitialized(true);
+        }
+      });
+    };
 
+    // Create new ResizeObserver
+    const resizeObserver = new ResizeObserver(updateDimensions);
     resizeObserver.observe(containerRef.current);
 
     return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
       resizeObserver.disconnect();
     };
   }, [onResize, dimensions, isInitialized]);
@@ -60,35 +79,41 @@ const AutoResizeBox = ({ children, sx = {}, onResize }) => {
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [onResize]);
+  }, [onResize, dimensions]);
 
   const childrenWithProps = React.Children.map(children, (child) => {
-    // Check if valid React element and not a DOM element (lowercase tag name)
-    if (React.isValidElement(child)) {
-      // Only pass props to custom components (uppercase first letter)
-      const componentName =
-        child.type?.displayName ||
-        child.type?.name ||
-        (typeof child.type === "string" ? child.type : "");
-      const isCustomComponent = componentName && /^[A-Z]/.test(componentName);
+    // If not a valid React element, return as is
+    if (!React.isValidElement(child)) return child;
 
-      // Don't pass containerDimensions to Fragment (React.Fragment or <>)
-      const isFragment =
-        child.type === React.Fragment ||
-        child.type?.toString() === "Symbol(react.fragment)";
+    // Don't pass props to DOM elements
+    if (typeof child.type === "string") return child;
 
-      if (isCustomComponent && !isFragment) {
-        return React.cloneElement(child, {
-          containerDimensions: dimensions,
-          style: {
-            ...child.props.style,
-            width: "100%",
-            height: "100%",
-            // Removed minHeight that was causing issues
-          },
-        });
-      }
+    // Check if the child is a custom component (uppercase first letter)
+    const componentName =
+      child.type?.displayName ||
+      child.type?.name ||
+      (typeof child.type === "string" ? child.type : "");
+
+    const isCustomComponent = componentName && /^[A-Z]/.test(componentName);
+
+    // Don't pass containerDimensions to Fragment
+    const isFragment =
+      child.type === React.Fragment ||
+      child.type?.toString() === "Symbol(react.fragment)";
+
+    if (isCustomComponent && !isFragment) {
+      // Pass containerDimensions and ensure it has proper style
+      return React.cloneElement(child, {
+        containerDimensions: dimensions,
+        style: {
+          ...child.props.style,
+          width: "100%",
+          height: "100%",
+          // No minHeight to avoid overflow issues
+        },
+      });
     }
+
     return child;
   });
 
@@ -98,11 +123,11 @@ const AutoResizeBox = ({ children, sx = {}, onResize }) => {
       sx={{
         height: "100%",
         width: "100%",
-        flex: 1, // This is crucial for proper flex behavior
+        flex: 1,
         display: "flex",
         flexDirection: "column",
         position: "relative",
-        overflow: "visible", // Allow content to flow naturally
+        overflow: "hidden", // Prevent content from overflowing
         ...sx,
       }}
       data-dimensions={`${dimensions.width}x${dimensions.height}`}

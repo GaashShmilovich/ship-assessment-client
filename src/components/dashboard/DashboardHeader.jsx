@@ -1,4 +1,7 @@
+// Fix for DashboardHeader.jsx
+// Replace the Box container at the top with this improved version
 // src/components/dashboard/DashboardHeader.jsx
+
 import React from "react";
 import {
   Box,
@@ -11,12 +14,8 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { getAllShips, getAllInfractions } from "../../services/api";
 
-/**
- * DashboardHeader - Shows key metrics at the top of the dashboard
- * Precisely aligned with map container below
- */
 const DashboardHeader = () => {
-  // Fetch data for metrics - Added default empty arrays
+  // Data fetching remains the same
   const { data: ships = [], isLoading: shipsLoading } = useQuery({
     queryKey: ["ships"],
     queryFn: () => getAllShips().then((res) => res.data || []),
@@ -27,11 +26,10 @@ const DashboardHeader = () => {
     queryFn: () => getAllInfractions().then((res) => res.data || []),
   });
 
-  // Calculate statistics - Added safety checks for arrays
+  // Calculate statistics
   const stats = React.useMemo(() => {
     if (shipsLoading) return null;
 
-    // Ensure ships is an array
     const shipsArray = Array.isArray(ships) ? ships : [];
     const infractionsArray = Array.isArray(infractions) ? infractions : [];
 
@@ -88,8 +86,7 @@ const DashboardHeader = () => {
   }
 
   return (
-    // Changed fixed width to responsive width
-    <Box sx={{ width: "100%", maxWidth: 1200, mb: 3 }}>
+    <Box sx={{ width: "100%", mb: 3, overflow: "hidden" }}>
       <Typography
         variant="h4"
         sx={{
@@ -125,7 +122,7 @@ const DashboardHeader = () => {
                 sx={{
                   my: 0.5,
                   fontWeight: 500,
-                  fontSize: { xs: "2rem", sm: "2.5rem" },
+                  fontSize: { xs: "1.75rem", sm: "2.25rem" },
                 }}
               >
                 {stats?.totalShips || 0}
@@ -166,7 +163,7 @@ const DashboardHeader = () => {
                 sx={{
                   my: 0.5,
                   fontWeight: 500,
-                  fontSize: { xs: "2rem", sm: "2.5rem" },
+                  fontSize: { xs: "1.75rem", sm: "2.25rem" },
                 }}
               >
                 {stats?.underReview || 0}
@@ -210,7 +207,7 @@ const DashboardHeader = () => {
                 sx={{
                   my: 0.5,
                   fontWeight: 500,
-                  fontSize: { xs: "2rem", sm: "2.5rem" },
+                  fontSize: { xs: "1.75rem", sm: "2.25rem" },
                 }}
               >
                 {stats?.inQuarantine || 0}
@@ -254,7 +251,7 @@ const DashboardHeader = () => {
                 sx={{
                   my: 0.5,
                   fontWeight: 500,
-                  fontSize: { xs: "2rem", sm: "2.5rem" },
+                  fontSize: { xs: "1.75rem", sm: "2.25rem" },
                 }}
               >
                 {stats?.totalInfractions || 0}

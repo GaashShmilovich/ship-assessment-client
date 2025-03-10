@@ -111,13 +111,13 @@ const getDefaultLayout = (width) => {
 
   // Default (desktop) layout - Map first, DocExpiry second, then 2 per row
   return [
-    { i: "shipMap", x: 0, y: 0, w: 12, h: 10, static: false }, // Full width
-    { i: "docExpiry", x: 0, y: 10, w: 12, h: 6, static: false }, // Full width
-    { i: "riskAlerts", x: 0, y: 16, w: 6, h: 6, static: false }, // Left column
-    { i: "securityMetrics", x: 6, y: 16, w: 6, h: 6, static: false }, // Right column
-    { i: "timeline", x: 0, y: 22, w: 6, h: 6, static: false }, // Left column
-    { i: "infractions", x: 6, y: 22, w: 6, h: 6, static: false }, // Right column
-    { i: "cargo", x: 0, y: 28, w: 6, h: 6, static: false }, // Left column
+    { i: "shipMap", x: 0, y: 0, w: 11, h: 10, static: false }, // Full width
+    { i: "docExpiry", x: 0, y: 10, w: 11, h: 6, static: false }, // Full width
+    { i: "riskAlerts", x: 0, y: 16, w: 5.5, h: 6, static: false }, // Left column
+    { i: "securityMetrics", x: 5.5, y: 16, w: 5.5, h: 6, static: false }, // Right column
+    { i: "timeline", x: 0, y: 22, w: 5.5, h: 6, static: false }, // Left column
+    { i: "infractions", x: 5.5, y: 22, w: 5.5, h: 6, static: false }, // Right column
+    { i: "cargo", x: 0, y: 28, w: 5.5, h: 5, static: false }, // Left column
   ];
 };
 

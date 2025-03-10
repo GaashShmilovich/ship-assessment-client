@@ -1,3 +1,4 @@
+// src/components/dashboard/DashboardControls.jsx
 import React from "react";
 import {
   Box,
@@ -30,7 +31,7 @@ const DashboardControls = ({
     <Paper
       elevation={2}
       sx={{
-        p: 2,
+        p: { xs: 1.5, sm: 2 }, // Smaller padding on mobile
         mb: 3,
         borderRadius: 2,
         display: "flex",
@@ -39,8 +40,8 @@ const DashboardControls = ({
         justifyContent: "space-between",
         background: "linear-gradient(to right, #ffffff, #f9f9ff)",
         width: "100%", // Take full width of parent container
-        mx: "auto", // Center horizontally
         boxSizing: "border-box", // Include padding in width calculation
+        overflow: "hidden", // Prevent overflow
       }}
     >
       <Box
@@ -103,6 +104,7 @@ const DashboardControls = ({
           flexWrap: "wrap",
           gap: 1,
           maxWidth: { xs: "100%", md: "60%" },
+          mt: { xs: 1, sm: 0 }, // Add top margin on mobile
         }}
       >
         {Object.keys(initialWidgets).map((key) => (
@@ -119,7 +121,14 @@ const DashboardControls = ({
             variant={visibleWidgets[key] ? "default" : "outlined"}
             onClick={() => handleToggleWidget(key)}
             color={visibleWidgets[key] ? "primary" : "default"}
-            sx={{ borderRadius: "4px" }}
+            sx={{
+              borderRadius: "4px",
+              height: "28px", // Smaller height for better fit
+              "& .MuiChip-label": {
+                px: 1,
+                fontSize: "0.75rem", // Smaller font size
+              },
+            }}
           />
         ))}
       </Box>
